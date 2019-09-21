@@ -249,7 +249,7 @@ class samquerysource(samprojectsource):
       self.snapshot_id = None
    
     # need a unique project name but it needs to be shared across each grid job. 
-    # Therefore, create one per query per loader instance
+    # Therefore, create one per query per Loader instance
     batchname = re.sub(r' with limit [0-9]*$', '', self.query)
     projname = "%s_pandana_proj%d_%s" % (self.user, self.instanceid, hashlib.md5(batchname).hexdigest())
     uniqueid = "time"+datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -284,9 +284,9 @@ class samquerysource(samprojectsource):
       ))
       sys.exit(2)
 
-    # allow only one per cluster for a given loader instance
+    # allow only one per cluster for a given Loader instance
     if self.isgrid and projexist.count(True):
-      assert projexist.count(True) == 1, "Multiple projects of the same loader instance running on the same cluster. This shouldn't be possible" 
+      assert projexist.count(True) == 1, "Multiple projects of the same Loader instance running on the same cluster. This shouldn't be possible"
       # Some other grid job has already created our project. Connect to it
       projname = projlist[projexist.index(True)]
     else:
@@ -400,5 +400,5 @@ class sourcewrapper():
       return samquerysource(self.query)
     
     else:
-      print ("Invalid loader query!")
+      print ("Invalid Loader query!")
       sys.exit(2)

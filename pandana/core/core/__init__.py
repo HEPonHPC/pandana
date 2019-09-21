@@ -16,7 +16,7 @@ class Spectrum():
     def __init__(self, tables, cut, var, weight=None, name=None):
         self._name = name
 
-        # associate this Spectrum, cut with loader for filling
+        # associate this Spectrum, cut with Loader for filling
         tables.add_spectrum(self)
         tables.add_cut(cut)
 
@@ -25,7 +25,7 @@ class Spectrum():
         self._cutfcn = cut
         self._weightfcn = weight
 
-        # keep a reference to loader for fill
+        # keep a reference to Loader for fill
         self._tables = tables
 
         # compute cut, var, and weights
@@ -45,7 +45,7 @@ class Spectrum():
             else: self._weight = weight(tables, self._weight)
 
     def fill(self):
-        # loader.Go() has been called
+        # Loader.Go() has been called
         self.__init__(self._tables, self._cutfcn, self._varfcn, weight=self._weightfcn, name=self._name)
 
         # Just to be sure...
@@ -146,6 +146,8 @@ def save_tree(fname, spectra, groups, attrs=True):
             g.create_dataset(name, data=indexdf[name].values)
 
     f.close()
+
+
 # Load spectra from a file. Takes one or a list of group names to read
 def load_spectra(fname, groups):
     if not type(groups) is list: groups = [groups]
@@ -166,8 +168,7 @@ def load_spectra(fname, groups):
     if len(groups) == 1: return ret[0]
     return ret
 
-
-class loader():
+class Loader():
     def __init__(self, filesource, stride = 1, offset = 0, limit = None, index=None):
 
         self._files = sourcewrapper(filesource, stride, offset, limit)
@@ -314,7 +315,7 @@ class loader():
 # Coupled with the fact that the projects can be shared over different grid jobs, 
 # this can result in unexpected behaviour if the macro expects them to share the same data downstream. 
 # This class allows the user to use a single project over multiple loaders 
-class AssociateLoader(loader):
+class AssociateLoader(Loader):
     def __init__(self, loaders):
         self.loaders = loaders
         assert len(self.loaders) > 0, "Can't associate empty list of loaders!"
@@ -345,7 +346,7 @@ class AssociateLoader(loader):
         ldr_idx = 1
         for ldr in self.loaders:
           print ("\n------------------------------")
-          print(("Filling spectra for loader %d" % ldr_idx))
+          print(("Filling spectra for Loader %d" % ldr_idx))
           ldr.fillSpectra()
           ldr.cleanup()
           ldr_idx += 1

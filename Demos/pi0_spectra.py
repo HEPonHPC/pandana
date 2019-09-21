@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 # Note 2: One liners can be done with lambda functions directly in the cut.
 ###########################################
 
-# npng etc now in brackets instead of an attribute so the loader knows what to load 
+# npng etc now in brackets instead of an attribute so the Loader knows what to load
 kTwoProng = Cut(lambda tables:
                 (tables['rec.vtx.elastic.fuzzyk']['npng'] == 2).groupby(level=KL).agg(np.any))
 
@@ -101,11 +101,11 @@ if __name__ == '__main__':
     # Latest hdf5s as of 22-04-2019
     dMC = '/pnfs/nova/persistent/users/karlwarb/HDF5-Training-19-02-26/ND-GIBUU-FHC'
     filesMC  = [os.path.join(dMC,f) for f in os.listdir(dMC) if 'h5caf.h5' in f]
-    tablesMC = loader(filesMC, limit=100)
+    tablesMC = Loader(filesMC, limit=100)
 
     dData = '/pnfs/nova/persistent/users/karlwarb/HDF5-Training-19-02-26/ND-Data-FHC'
     filesData  = [os.path.join(dData,f) for f in os.listdir(dData) if 'h5caf.h5' in f]
-    tablesData = loader(filesData, limit=100)
+    tablesData = Loader(filesData, limit=100)
 
     # Define cuts
     # The cut class knows how to interpret & and ~

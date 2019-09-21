@@ -29,7 +29,7 @@ kFiducial = Cut(kFiducial)
 # Latest h5s from Karl
 loc = '/pnfs/nova/persistent/users/karlwarb/HDF5-Training-19-02-26/FD-FluxSwap-FHC'
 files = [os.path.join(loc, f) for f in os.listdir(loc) if 'h5caf.h5' in f]
-tables = loader(files, limit=100)
+tables = Loader(files, limit=100)
 
 # Create a Spectrum
 myspectrum = Spectrum(tables, kFiducial, kPngE)

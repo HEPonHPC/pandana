@@ -7,7 +7,7 @@ class dfproxy(pd.DataFrame):
     _internal_names_set = set(_internal_names)
 
     # proxy for a dataframe that builds a cache of columns needed to be read from the files
-    # needed before Go() so loader knows what to load
+    # needed before Go() so Loader knows what to load
     @property
     def _constructor(self):
         return dfproxy

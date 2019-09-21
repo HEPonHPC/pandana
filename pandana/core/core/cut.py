@@ -19,7 +19,7 @@ class Cut():
         self._cutid = [0]*len(self._cut)
 
     def reset_cutindices(self):
-        # need to reset after use by loader
+        # need to reset after use by Loader
         self._filter = [0]*len(self._cut)
         self._cutid = [0]*len(self._cut)
 

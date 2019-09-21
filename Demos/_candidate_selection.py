@@ -5,7 +5,7 @@ from pandana.cut.analysis_cuts import kNumuCutND
 
 
 def main(input_files, max_files):
-    tables = loader(input_files, limit=max_files)
+    tables = Loader(input_files, limit=max_files)
     energy = Var(lambda tables: tables['rec.slc']['calE'])
     my_spectrum = Spectrum(tables, kNumuCutND, energy)
     tables.Go()

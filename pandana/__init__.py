@@ -9,8 +9,8 @@ with warnings.catch_warnings():
 import os 
 import sys
 
-from PandAna.core import *
-import PandAna.utils
-import PandAna.var
-import PandAna.cut
-import PandAna.weight
+from pandana.core import *
+import pandana.utils
+import pandana.var
+import pandana.cut
+import pandana.weight

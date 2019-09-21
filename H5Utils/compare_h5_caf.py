@@ -37,9 +37,9 @@ fcaf = TFile(rootfile, 'read')
 
 keystocheck = []
 if opts.all:
-    keystocheck = fh5.keys()
+    keystocheck = list(fh5.keys())
 if opts.branches:
-    keystocheck = [key for key in fh5.keys() if re.match(opts.branches, key)]
+    keystocheck = [key for key in list(fh5.keys()) if re.match(opts.branches, key)]
 if not len(keystocheck):
     sys.exit('No valid keys found. Please provide either valid option -br or option -a')
 
@@ -48,8 +48,8 @@ for branchkey in keystocheck:
     if any([check in branchkey for check in skip]):
         continue
     
-    print "Testing... ", branchkey
-    print "============================"
+    print("Testing... ", branchkey)
+    print("============================")
     roottree = recTree
     rootbranchkey = branchkey
 
@@ -59,12 +59,12 @@ for branchkey in keystocheck:
     if branchkey.startswith('neutrino'):
         roottree = nuTree
         rootbranchkey = re.sub(r'neutrino','nu',branchkey)
-        branchkeys = [key for key in branch.keys() if (key not in KL) and ('idx' not in key)]
+        branchkeys = [key for key in list(branch.keys()) if (key not in KL) and ('idx' not in key)]
     if branchkey.startswith('spill'):
         roottree = spillTree
-        branchkeys = [key for key in branch.keys() if 'idx' not in key]
+        branchkeys = [key for key in list(branch.keys()) if 'idx' not in key]
     if branchkey.startswith('rec'):
-        branchkeys = [key for key in branch.keys() if (key not in KL) and ('idx' not in key)]
+        branchkeys = [key for key in list(branch.keys()) if (key not in KL) and ('idx' not in key)]
 
     idx = 0
     total = len(branchkeys)
@@ -84,28 +84,28 @@ for branchkey in keystocheck:
             rootdata[i] = roottemp[i]
         
         if len(h5data) != len(rootdata):
-            print "************"
-            print "NEntries mismatch!"
+            print("************")
+            print("NEntries mismatch!")
             continue
         if not all(h5data == h5data):
             if not (len(h5data) == len(rootdata)):
-                print "************"
-                print branchkey+'.'+key
-                print "Entries w/ NaNs. Size mismatch!"
+                print("************")
+                print(branchkey+'.'+key)
+                print("Entries w/ NaNs. Size mismatch!")
                 continue
             h5data = h5data[h5data==h5data]
             rootdata = rootdata[rootdata == rootdata]
             if not all(h5data == rootdata):
-                print "************"
-                print branchkey+'.'+key
-                print "Non NaN data doesn't match!"
+                print("************")
+                print(branchkey+'.'+key)
+                print("Non NaN data doesn't match!")
                 continue
         else:
             if not all(h5data == rootdata):
-                print "************"
-                print branchkey+'.'+key
-                print "Doesn't match"
+                print("************")
+                print(branchkey+'.'+key)
+                print("Doesn't match")
                 continue
 
-print "============================"
-print "Total time taken : ", time.time() - start
+print("============================")
+print("Total time taken : ", time.time() - start)

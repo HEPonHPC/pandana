@@ -1,9 +1,9 @@
 import pandas as pd
 import numpy as np
 
-from PandAna.core.core import Cut, KL
-from PandAna.utils.enums import *
-from PandAna.var.analysis_vars import *
+from pandana.core.core import Cut, KL
+from pandana.utils.enums import *
+from pandana.var.analysis_vars import *
 
 kIsFD = kDetID == detector.kFD
 
@@ -258,6 +258,14 @@ kNumuContainND = Cut(kNumuContainND)
 kNumuNCRej = Cut(lambda tables: tables['rec.sel.remid']['pid'] > 0.75)
 
 kNumuNoPIDND = kNumuQuality & kNumuContainND
+
+def kNumuPID(tables):
+    return (tables['rec.sel.remid']['pid'] > 0.7) &\
+           (tables['rec.sel.cvnProd3Train']['numuid'] > 0.7) &\
+           (tables['rec.sel.cvn2017']['numuid'] > 0.1)
+kNumuPID = Cut(kNumuPID)
+
+kNumuCutND = kNumuQuality & kNumuContainND & kNumuPID
 
 ###################################################################################
 #

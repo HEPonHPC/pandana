@@ -1,4 +1,4 @@
-from PandAna.core.core import KL, Var
+from pandana.core.core import KL, Var
 
 KLP = KL + ['rec.vtx.elastic.fuzzyk.png_idx']
 

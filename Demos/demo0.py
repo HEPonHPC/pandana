@@ -1,8 +1,9 @@
 import os
 import sys
-sys.path.append('../..')
+newdir = "/".join(os.path.dirname(os.path.realpath(__file__)).split("/")[:-2])
+sys.path.insert(0, newdir)
 
-from PandAna.core import *
+from pandana.core import *
 #  import matplotlib.pyplot as plt
 #  import xkcd
 
@@ -13,7 +14,7 @@ kSlcE = Var(lambda tables: tables['rec.slc']['calE'])
 kEnergyCut = (kSlcE > 1) & (kSlcE < 4)
 
 # Latest h5s from Karl
-loc = '/pnfs/nova/persistent/users/karlwarb/HDF5-Training-19-02-26/FD-FluxSwap-FHC'
+loc = sys.argv[1]
 files = [os.path.join(loc, f) for f in os.listdir(loc) if 'h5caf.h5' in f]
 tables = loader(files, limit=50)
 

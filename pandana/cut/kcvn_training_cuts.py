@@ -1,5 +1,5 @@
-from PandAna.core.core import *
-from PandAna.var.kcvn_training_vars import *
+from pandana.core.core import *
+from pandana.var.kcvn_training_vars import *
 
 #To change Purity cuts easily:
 

@@ -1,9 +1,8 @@
 import numpy as np
 import pandas as pd
 import h5py
-from progbar import ProgressBar
 import time
-from PandAna.core.filesource import *
+from pandana.core.filesource import *
 import os
 
 # How to index the data
@@ -376,7 +375,7 @@ class loader():
         # use global index to slice dataframe requested
         elif self._tables[key].dropna().empty:
             # sometimes there's no data available in the file, allow it but warn
-            print "Warning! No data read for %s" % key
+            print("Warning! No data read for %s" % key)
             return self._tables[key]
         else:
             dfslice = self._tables[key].loc[self._tables['indices']]
@@ -388,7 +387,7 @@ class loader():
         self.gone = True
         self._filegen = self._files()
 
-        print("Reading data from %s files : \n" % self._filegen.nFiles())
+        print(("Reading data from %s files : \n" % self._filegen.nFiles()))
 
     def getFile(self):
         return self._filegen()
@@ -428,18 +427,15 @@ class loader():
         self.sum_POT()
         
         spec_idx = 0
-        spec_progbar = ProgressBar(len(self.histdefs))
-        print("Filling %s spectra\n" % len(self.histdefs))
+        print(("Filling %s spectra\n" % len(self.histdefs)))
         for spec in self.histdefs:
             spec_idx += 1
-            spec_progbar.Update(spec_idx)
             spec.fill()
         
     def Go(self):
         t0 = time.time()
         self.setupGo()
         file_idx = 0
-        file_progbar = ProgressBar(self._filegen.nFiles())
         while True:
           try:
             fname = self.getFile()
@@ -448,14 +444,13 @@ class loader():
             self.closeFile()
        
             file_idx += 1
-            file_progbar.Update(file_idx)
           except StopIteration:
             break
         
         self.fillSpectra()
         # cleanup
         self.cleanup()
-        print("\nTotal time : %s sec\n" % (time.time() - t0))
+        print(("\nTotal time : %s sec\n" % (time.time() - t0)))
 
     def cleanup(self):
         # free up some memory
@@ -482,9 +477,8 @@ class associate(loader):
     def Go(self):
         t0 = time.time()
         self.setupGo()
-        print("Associating %d loaders with the same dataset : \n" % len(self.loaders))
+        print(("Associating %d loaders with the same dataset : \n" % len(self.loaders)))
         file_idx = 0
-        file_progbar = ProgressBar(self._filegen.nFiles())
         while True:
           try:
             fname = self.getFile()
@@ -495,17 +489,16 @@ class associate(loader):
               ldr.readData()
             self.closeFile()
             file_idx += 1
-            file_progbar.Update(file_idx)
           except StopIteration:
             break
         ldr_idx = 1
         for ldr in self.loaders:
           print ("\n------------------------------")
-          print ("Filling spectra for loader %d" % ldr_idx)
+          print(("Filling spectra for loader %d" % ldr_idx))
           ldr.fillSpectra()
           ldr.cleanup()
           ldr_idx += 1
-        print("\nTotal time : %s sec\n" % (time.time() - t0))
+        print(("\nTotal time : %s sec\n" % (time.time() - t0)))
 
 class interactive_loader():
     def __init__(self, files):
@@ -515,7 +508,7 @@ class interactive_loader():
     def keys(self, contain=None):
         f = self._files[0]
         h5 = h5py.File(f, 'r')
-        for k in h5.keys():
+        for k in list(h5.keys()):
             if contain:
                 if contain in k:
                     print(k)
@@ -530,7 +523,7 @@ class interactive_loader():
                 f = h5py.File(fname,'r')
                 group = f.get(key)
                 values = {}
-                for k in group.keys():
+                for k in list(group.keys()):
                     dataset = group.get(k).value
                     if dataset.shape[1] == 1:
                         dataset = dataset.flatten()

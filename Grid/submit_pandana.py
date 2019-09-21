@@ -26,7 +26,7 @@ def test_not_dcache(l, warnOnly = False):
 
 if __name__ == '__main__':
     
-    parser = argparse.ArgumentParser(description = 'Submit a PandAna macro to run on the grid')
+    parser = argparse.ArgumentParser(description = 'Submit a pandana macro to run on the grid')
 
     parser.add_argument('-f', '--files_per_job', type=int, default=None,
                         help='Number of files to process in each worker node')
@@ -44,7 +44,7 @@ if __name__ == '__main__':
                         help='Path to tar file containing external module libraries which the macro may depend on')
     
     parser.add_argument('macro.py',
-                        help='The PandAna macro to run')
+                        help='The pandana macro to run')
 
     parser.add_argument('args', nargs='*',
                         help='Arguments to the macro')
@@ -56,11 +56,11 @@ if __name__ == '__main__':
     ###tarball control options.
     tarball_gp = job_control_args.add_mutually_exclusive_group(required=False)
     tarball_gp.add_argument('-t', '--testrel', metavar='DIR', 
-                            help='Folder which contains PandAna. It will be tarred up, and sent to the worker node. (Conflicts with --user_tarball)',
+                            help='Folder which contains pandana. It will be tarred up, and sent to the worker node. (Conflicts with --user_tarball)',
                             default=None)
     
     tarball_gp.add_argument("--user_tarball",
-                            help="Use existing tarball of folder containing PandAna in specified location rather than having jobsub make one for you (conflicts with --testrel, and is redunant with --reuse_tarball)",
+                            help="Use existing tarball of folder containing pandana in specified location rather than having jobsub make one for you (conflicts with --testrel, and is redunant with --reuse_tarball)",
                             type=str)
 
     ###general job control
@@ -107,11 +107,11 @@ if __name__ == '__main__':
     NovaGridUtils.check_is_group_writable(opts.outdir)
 
     if not (opts.testrel or opts.user_tarball or opts.reuse_tarball):
-        print ("Please provide test release option or path to tarball of folder containing PandAna!")
+        print ("Please provide test release option or path to tarball of folder containing pandana!")
         sys.exit(2)
     pandana_tar = None
     if opts.testrel:
-        NovaGridUtils.check_dir(opts.testrel+'/PandAna')
+        NovaGridUtils.check_dir(opts.testrel+'/pandana')
     if opts.user_tarball:
         pandana_tar = opts.user_tarball
     if opts.reuse_tarball:
@@ -131,7 +131,7 @@ if __name__ == '__main__':
     if opts.copyOut:
       NovaGridUtils.check_file(opts.copyOut)
     
-    grid_script = os.getenv('FW_RELEASE_BASE')+'/PandAna/Grid/pandana_grid_script.sh'
+    grid_script = os.getenv('FW_RELEASE_BASE')+'/pandana/Grid/pandana_grid_script.sh'
     NovaGridUtils.check_file(grid_script)
     
     # jobsub control
@@ -169,7 +169,7 @@ if __name__ == '__main__':
         opts.outdir = out + testfolder
         subprocess.call(['mkdir', '-p', opts.outdir])
         subprocess.call(['chmod', 'oug=wrx', opts.outdir])
-        print ("Running test job on 1 file, output directory is %s" % opts.outdir)
+        print(("Running test job on 1 file, output directory is %s" % opts.outdir))
     
     cmd = 'jobsub_submit '
     
@@ -211,7 +211,7 @@ if __name__ == '__main__':
     for a in opts.args: cmd += ' '+a
     
     if print_jobsub:
-        print cmd
+        print(cmd)
         sys.stdout.flush()
         sys.stderr.flush()
    

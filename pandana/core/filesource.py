@@ -80,7 +80,7 @@ class samprojectsource():
         self.hasTicket = True
       except subprocess.CalledProcessError:
         self.hasTicket = False
-        print (sys.exit(2), "Authentication failed. Please run setup_fnal_security -k")
+        print((sys.exit(2), "Authentication failed. Please run setup_fnal_security -k"))
     if not os.getenv("X509_USER_PROXY"):
       uid = subprocess.check_output(["id", "-u"]).strip('\n')
       os.environ["X509_USER_PROXY"] = "/tmp/x509up_u"+uid
@@ -94,7 +94,7 @@ class samprojectsource():
     self.processID = self.ifdh.establishProcess(self.projurl, "demo", "1",
                                                 os.getenv('HOSTNAME'),
                                                 userstr, "nova", "", self.limit)
-    print("Connecting to project %s with process %s" % (self.projurl, self.processID))
+    print(("Connecting to project %s with process %s" % (self.projurl, self.processID)))
     if self.nfiles < 0:
       self.nfiles = self.SAM.projectSummary(self.projname)['files_in_snapshot']
 
@@ -143,20 +143,20 @@ class samprojectsource():
   def processStats(self, processID):
     stats = self.SAM.projectSummary(self.projname)
     process_stats = stats.pop('processes')
-    print process_stats
-    print processID
+    print(process_stats)
+    print(processID)
     process = [k for k in process_stats if k['process_id'] == int(processID)]
     if not process:
       print("Warning!! Something went wrong. unable to get process information.")
       print("\nProject summary :")
       print("===================")
-      print(self.SAM.projectSummaryText(self.projname))
+      print((self.SAM.projectSummaryText(self.projname)))
       return
     stats.update({'process':process[0]})
     import yaml
     print("\nProcess summary :")
     print("===================")
-    print(yaml.dump(stats))
+    print((yaml.dump(stats)))
     return
 
 # wrap sam queries around a project.
@@ -272,16 +272,16 @@ class samquerysource(samprojectsource):
     # don't allow too many stale projects
     projcheck = [projname+checkprojid in l for l in projlist]
     if projcheck.count(True) > MAX_PROJECTS:
-      print (
+      print((
       """
       More than %d projects are running for current query already.
       Most likely, this is because of leftover projects from faulty/interrupted runs.
       Use samweb list-projects --defname=%s --snapshot_id=%d --state=running | grep %s 
       and stop each one of them with samweb stop-project first and then re-run.
-      You can also call PandAna.utils.misc.StopAllUserProjects() in your script to 
+      You can also call pandana.utils.misc.StopAllUserProjects() in your script to 
       stop all your running interactive and grid projects 
       """ % (samquersource._MAX_PROJECTS, self.definition, self.snapshot_id, projname+checkprojid)
-      )
+      ))
       sys.exit(2)
 
     # allow only one per cluster for a given loader instance
@@ -383,7 +383,7 @@ class sourcewrapper():
       
       if not self.limit: self.limit = -1
       
-      print ("Running over SAM project with name %s" % self.query)
+      print(("Running over SAM project with name %s" % self.query))
       return samprojectsource(self.query, self.limit)
     
     elif self.issamquery():
@@ -396,7 +396,7 @@ class sourcewrapper():
       if self.limit:
         self.query += ' with limit %d' % self.limit
       
-      print ("Running over list of files matching SAM query '%s'" % self.query)
+      print(("Running over list of files matching SAM query '%s'" % self.query))
       return samquerysource(self.query)
     
     else:

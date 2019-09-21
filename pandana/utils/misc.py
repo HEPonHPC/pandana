@@ -1,16 +1,16 @@
 import numpy as np
 import os
-from PandAna.utils.enums import *
+from pandana.utils.enums import *
 import sys
 
 # Taken from https://cdcvs.fnal.gov/redmine/projects/novaart/repository/entry/trunk/CAFAna/Core/Utilities.cxx
 BeamDirFD = np.array([-6.83271078e-05,  6.38772962e-02,  9.97957758e-01])
 BeamDirND = np.array([-8.42393199e-04, -6.17395015e-02,  9.98091942e-01])
 
-def FindPandAnaDir(folder=None):
-  pandana = os.environ['FW_RELEASE_BASE']+'/PandAna'
+def FindpandanaDir(folder=None):
+  pandana = os.environ['FW_RELEASE_BASE']+'/pandana'
   if folder:
-    pandana = folder+'/PandAna'
+    pandana = folder+'/pandana'
   assert os.path.isdir(pandana), "Cannot find directory : {}".format(pandana) 
   return pandana
 

@@ -1,9 +1,9 @@
 import numpy as np
 import pandas as pd
-from PandAna.core.core import Var, KL
-from PandAna.utils import *
+from pandana.core.core import Var, KL
+from pandana.utils import *
 
-from PandAna.var.numuE_utils import *
+from pandana.var.numuE_utils import *
 
 # cvnProd3Train is messed up in the current iteration of files.
 kCVNe = Var(lambda tables: tables['rec.sel.cvn2017']['nueid'])

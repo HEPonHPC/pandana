@@ -1,7 +1,7 @@
 import numpy as np
 
-from PandAna.utils.enums import *
-from PandAna.utils.misc import GetPeriod
+from pandana.utils.enums import *
+from pandana.utils.misc import GetPeriod
 
 # For the Numu Energy Estimator
 class SplineFit():
@@ -26,7 +26,7 @@ class SplineFit():
   def __call__(self, var):
     if var <= 0.:
       return 0.
-    stitchpos = np.where(map(lambda i: i <= var, self.x0))[0]
+    stitchpos = np.where([i <= var for i in self.x0])[0]
     if len(stitchpos):
       return self.slopes[stitchpos[-1]]*var + self.intercepts[stitchpos[-1]]
     else:

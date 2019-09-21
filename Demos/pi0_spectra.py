@@ -9,7 +9,7 @@ import os
 # Includes
 import sys
 sys.path.append('../..')
-from PandAna.core import *
+from pandana.core import *
 # analysis packages
 import numpy as np
 import pandas as pd
@@ -116,24 +116,24 @@ if __name__ == '__main__':
     bkg = spectrum(tablesMC, cutBkg, kMass)
     tot = spectrum(tablesMC, cutTot, kMass)
 
-    print time.time() - start
+    print(time.time() - start)
     tablesData.Go()
     tablesMC.Go()
-    print time.time() - start
+    print(time.time() - start)
     POT = data.POT()
 
-    print('Found ' + str(data.POT()) + ' POT. Scaling to ' + str(POT) + ' POT.')
+    print(('Found ' + str(data.POT()) + ' POT. Scaling to ' + str(POT) + ' POT.'))
 
-    print('Selected ' + str(data.entries()) + ' events in data.')
-    print('Selected ' + str(tot.entries()) + ' events in MC.')
-    print('Selected ' + str(bkg.entries()) + ' background.')
+    print(('Selected ' + str(data.entries()) + ' events in data.'))
+    print(('Selected ' + str(tot.entries()) + ' events in MC.'))
+    print(('Selected ' + str(bkg.entries()) + ' background.'))
 
     # Do an analysis!
     # With Spectra
     inttot = tot.integral(POT=POT)
     intbkg = bkg.integral(POT=POT)
     pur = (inttot - intbkg) / inttot
-    print('This selection has a pi0 purity of ' + str(pur))
+    print(('This selection has a pi0 purity of ' + str(pur)))
 
     # With histograms
     nbins = 8

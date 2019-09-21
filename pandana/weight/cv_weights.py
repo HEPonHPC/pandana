@@ -1,10 +1,10 @@
-from PandAna.core.core import KL
-from PandAna.weight.xsec_utils import *
+from pandana.core.core import KL
+from pandana.weight.xsec_utils import *
 
 import numpy as np
 import pandas as pd
 
-from PandAna.utils.enums import *
+from pandana.utils.enums import *
 
 def kRescaleMAQE(tables, weight):
   correctionInSigma = (1.04 - 0.99) / 0.25

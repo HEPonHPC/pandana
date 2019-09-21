@@ -1,2 +1,5 @@
 Data/
 .svn
+.idea
+*.prof
+*.pyc

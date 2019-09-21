@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import h5py
 
-from PandAna.utils import *
+from pandana.utils import *
 
 class NuWeightDFWrapper():
   def __init__(self, df):
@@ -108,7 +108,7 @@ class RPAWeightCCQE_2017(NuWeightFromFile):
   def __init__(self):
     fnu = {}
     fnubar = {}
-    fnu['file'] = FindPandAnaDir()+"/Data/xs/RPA2017.h5"
+    fnu['file'] = FindpandanaDir()+"/Data/xs/RPA2017.h5"
     fnubar['file'] = fnu['file']
     fnu['group'] = "RPA_CV_nu"
     fnubar['group'] = "RPA_CV_nubar"
@@ -117,7 +117,7 @@ class RPAWeightCCQE_2017(NuWeightFromFile):
   def GetWeight(self, params):
     qmag = params['qmag']
     q0 = params['q0']
-    isAntiNu = ('IsAntiNu' in params.keys()) and params['IsAntiNu']
+    isAntiNu = ('IsAntiNu' in list(params.keys())) and params['IsAntiNu']
 
     df = self.nu
     if isAntiNu: df = self.nubar
@@ -132,7 +132,7 @@ class RPAWeightQ2_2017(NuWeightFromFile):
   def __init__(self):
     fnu = {}
     fnubar = {}
-    fnu['file'] = FindPandAnaDir()+"/Data/xs/RPA2017.h5"
+    fnu['file'] = FindpandanaDir()+"/Data/xs/RPA2017.h5"
     fnubar['file'] = fnu['file']
     fnu['group'] = "RPA_Q2_CV_nu"
     fnubar['group'] = "RPA_Q2_CV_nubar"
@@ -140,7 +140,7 @@ class RPAWeightQ2_2017(NuWeightFromFile):
 
   def GetWeight(self, params):
     q2 = params['q2']
-    isAntiNu = ('IsAntiNu' in params.keys()) and params['IsAntiNu']
+    isAntiNu = ('IsAntiNu' in list(params.keys())) and params['IsAntiNu']
     
     df = self.nu
     if isAntiNu: df = self.nubar
@@ -150,7 +150,7 @@ class EmpiricalMECWgt2018(NuWeightFromFile):
   def __init__(self):
     fnu = {}
     fnubar = {}
-    fnu['file'] = FindPandAnaDir()+"/Data/xs/rw_empiricalMEC2018.h5"
+    fnu['file'] = FindpandanaDir()+"/Data/xs/rw_empiricalMEC2018.h5"
     fnubar['file'] = fnu['file']
     fnu['group'] = "numu_mec_weights_smoothed"
     fnubar['group'] = "numubar_mec_weights_smoothed"
@@ -159,7 +159,7 @@ class EmpiricalMECWgt2018(NuWeightFromFile):
   def GetWeight(self, params):
     qmag = params['qmag']
     q0 = params['q0']
-    isAntiNu = ('IsAntiNu' in params.keys()) and params['IsAntiNu']
+    isAntiNu = ('IsAntiNu' in list(params.keys())) and params['IsAntiNu']
 
     df = self.nu
     if isAntiNu: df = self.nubar

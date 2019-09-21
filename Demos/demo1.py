@@ -2,7 +2,7 @@ import os
 import sys
 sys.path.append('../..')
 
-from PandAna.core import *
+from pandana.core import *
 import matplotlib.pyplot as plt
 
 # Better var
@@ -36,11 +36,11 @@ myspectrum = spectrum(tables, kFiducial, kPngE)
 tables.Go()
 
 print('myspectrum internal dataframe: ')
-print(myspectrum.df().head())
+print((myspectrum.df().head()))
 
 n, bins = myspectrum.histogram(bins=20, range=(1,4))
 
-print('Selected '+ str(n.sum()) + ' events')
+print(('Selected '+ str(n.sum()) + ' events'))
 
 plt.hist(bins[:-1], bins=bins, weights=n)
 

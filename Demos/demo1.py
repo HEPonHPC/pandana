@@ -1,5 +1,7 @@
-import os
 import sys
+
+from pandana.core.core.var import Var
+
 sys.path.append('../..')
 
 from pandana.core import *

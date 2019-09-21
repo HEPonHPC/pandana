@@ -1,5 +1,8 @@
 import os
 import sys
+
+from pandana.core.core.var import Var
+
 newdir = "/".join(os.path.dirname(os.path.realpath(__file__)).split("/")[:-2])
 sys.path.insert(0, newdir)
 

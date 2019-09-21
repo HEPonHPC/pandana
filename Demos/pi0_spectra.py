@@ -5,14 +5,15 @@
 #
 ###############################################################
 
-import os
 # Includes
 import sys
+
+from pandana.core.core.var import Var
+
 sys.path.append('../..')
 from pandana.core import *
 # analysis packages
 import numpy as np
-import pandas as pd
 from scipy.optimize import curve_fit
 from astropy.stats import poisson_conf_interval
 # For plotting

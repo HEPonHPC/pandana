@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
-from pandana.core.core import Var, KL
+from pandana.core.core import KL
+from pandana.core.core.var import Var
 from pandana.utils import *
 
 from pandana.var.numuE_utils import *

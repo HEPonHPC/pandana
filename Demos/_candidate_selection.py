@@ -1,5 +1,6 @@
 from context import pandana
 from pandana.core import *
+from pandana.core.core.loader import Loader
 from pandana.core.core.var import Var
 from pandana.cut.analysis_cuts import kNumuCutND
 

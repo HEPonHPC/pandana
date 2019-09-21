@@ -12,11 +12,11 @@ KL = ['run', 'subrun', 'cycle', 'evt', 'subevt']
 KLN = ['run', 'subrun', 'cycle', 'evt']
 KLS = ['run', 'subrun', 'evt']
 
-class spectrum():
+class Spectrum():
     def __init__(self, tables, cut, var, weight=None, name=None):
         self._name = name
 
-        # associate this spectrum, cut with loader for filling
+        # associate this Spectrum, cut with loader for filling
         tables.add_spectrum(self)
         tables.add_cut(cut)
 
@@ -57,7 +57,7 @@ class spectrum():
         # Set dataframe name if desired
         if self._name: self._df = self._df.rename(self._name)
 
-        # Grab spectrum POT from tables
+        # Grab Spectrum POT from tables
         self._POT = self._tables._POT
 
     def POT(self):
@@ -90,7 +90,7 @@ class spectrum():
         return filledSpectrum(df, pot)
 
 # For constructing spectra without having to fill
-class filledSpectrum(spectrum):
+class filledSpectrum(Spectrum):
     def __init__(self, df, pot, weight=None):
         self._df = df
         self._POT = pot
@@ -199,7 +199,7 @@ class loader():
             self.cutdefs.append(cut)
 
     def reset_index(self):
-        # reset after each spectrum fill
+        # reset after each Spectrum fill
         self._tables['indices'] = 0
 
     def __setitem__(self, key, df):

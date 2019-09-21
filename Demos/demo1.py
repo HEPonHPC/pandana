@@ -31,8 +31,8 @@ loc = '/pnfs/nova/persistent/users/karlwarb/HDF5-Training-19-02-26/FD-FluxSwap-F
 files = [os.path.join(loc, f) for f in os.listdir(loc) if 'h5caf.h5' in f]
 tables = loader(files, limit=100)
 
-# Create a spectrum
-myspectrum = spectrum(tables, kFiducial, kPngE)
+# Create a Spectrum
+myspectrum = Spectrum(tables, kFiducial, kPngE)
 
 # Let's do it!
 tables.Go()

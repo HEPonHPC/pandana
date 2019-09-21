@@ -113,9 +113,9 @@ if __name__ == '__main__':
     cutBkg = cutTot & ~kTruePi0
 
     # Make Spectra
-    data = spectrum(tablesData, cutTot, kMass)
-    bkg = spectrum(tablesMC, cutBkg, kMass)
-    tot = spectrum(tablesMC, cutTot, kMass)
+    data = Spectrum(tablesData, cutTot, kMass)
+    bkg = Spectrum(tablesMC, cutBkg, kMass)
+    tot = Spectrum(tablesMC, cutTot, kMass)
 
     print(time.time() - start)
     tablesData.Go()

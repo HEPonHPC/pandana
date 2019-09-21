@@ -290,7 +290,9 @@ class dfproxy(pd.DataFrame):
     def _constructor(self):
         return dfproxy
 
-    def __init__(self, data=[], **kwargs):
+    def __init__(self, data=None, **kwargs):
+        if data is None:
+            data = []
         pd.DataFrame.__init__(self, data, **kwargs)
         self._proxycols = list(self.columns.values)
 

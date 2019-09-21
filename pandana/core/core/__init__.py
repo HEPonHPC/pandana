@@ -87,10 +87,10 @@ class Spectrum():
     def __add__(self, b):
         df = pd.concat([self._df, b._df])
         pot = self._POT + b._POT
-        return filledSpectrum(df, pot)
+        return FilledSpectrum(df, pot)
 
 # For constructing spectra without having to fill
-class filledSpectrum(Spectrum):
+class FilledSpectrum(Spectrum):
     def __init__(self, df, pot, weight=None):
         self._df = df
         self._POT = pot
@@ -159,7 +159,7 @@ def load_spectra(fname, groups):
         pot = store.get_storer(group+'/dataframe').attrs.pot
         weight = store[group+'/weights']
 
-        ret.append(filledSpectrum(df, pot, weight=weight))
+        ret.append(FilledSpectrum(df, pot, weight=weight))
 
     store.close()
 

@@ -351,7 +351,7 @@ class AssociateLoader(loader):
           ldr_idx += 1
         print(("\nTotal time : %s sec\n" % (time.time() - t0)))
 
-class interactive_loader():
+class InteractiveLoader():
     def __init__(self, files):
         self._files = files
         self._tables = {}

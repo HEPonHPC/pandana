@@ -314,7 +314,7 @@ class loader():
 # Coupled with the fact that the projects can be shared over different grid jobs, 
 # this can result in unexpected behaviour if the macro expects them to share the same data downstream. 
 # This class allows the user to use a single project over multiple loaders 
-class associate(loader):
+class AssociateLoader(loader):
     def __init__(self, loaders):
         self.loaders = loaders
         assert len(self.loaders) > 0, "Can't associate empty list of loaders!"

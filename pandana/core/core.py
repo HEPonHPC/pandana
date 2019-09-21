@@ -426,12 +426,10 @@ class loader():
         # Compute POT and then fill spectra
         self.sum_POT()
         
-        spec_idx = 0
         print(("Filling %s spectra\n" % len(self.histdefs)))
         for spec in self.histdefs:
-            spec_idx += 1
             spec.fill()
-        
+
     def Go(self):
         t0 = time.time()
         self.setupGo()

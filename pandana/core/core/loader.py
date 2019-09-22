@@ -3,13 +3,13 @@ import time
 import h5py
 import pandas as pd
 
-from pandana import sourcewrapper, KL, KLN, KLS, dfproxy
+from pandana import SourceWrapper, KL, KLN, KLS, dfproxy
 
 
 class Loader():
     def __init__(self, filesource, stride = 1, offset = 0, limit = None, index=None):
 
-        self._files = sourcewrapper(filesource, stride, offset, limit)
+        self._files = SourceWrapper(filesource, stride, offset, limit)
 
         # _tables stores the entire dataset read from file
         # index key holds the global index range to be accessed from the dataset by a cut/var

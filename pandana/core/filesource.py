@@ -10,7 +10,7 @@ import hashlib
 # Contains classes that return a generator over a file source 
 
 # simple wrapper around list of files provided by the user
-class listsource():
+class ListSource():
   def __init__(self, filelist):
     self.files = filelist
     self.gen = self.getnextfile()
@@ -27,7 +27,7 @@ class listsource():
     return len(self.files)
 
 # pass a glob instead
-class globsource():
+class GlobSource():
   def __init__(self, globstr, stride=1, offset=0, limit=None):
     import glob
     self.files = glob.glob(globstr)[offset::stride]
@@ -46,7 +46,7 @@ class globsource():
     return len(self.files)
 
 # sam project source
-class samprojectsource():
+class SAMProjectSource():
   def __init__(self, projname, limit = -1):
     from ifdh import ifdh
     import samweb_client
@@ -165,7 +165,7 @@ class samprojectsource():
 # CAFAna, in contrast, doesn't have a problem doing the above because the data is streamed via xrootd anyway, thus preventing concurrency issues.
 # The pros of using projects are that we don't have to worry about taking snapshots ourselves and a project can be shared across all grid jobs for example
 # The cons are that if we aren't careful the user can end up with many stale running projects and there's an experiment-wide cap
-class samquerysource(samprojectsource):
+class SAMQuerySource(SAMProjectSource):
   _instanceid = count(0)
   # number of running projects allowed per user
   _MAX_INT_PROJECTS = 10    #interactive
@@ -187,7 +187,7 @@ class samquerysource(samprojectsource):
       self.limit = -1
    
     # keep track of class instances in a given user macro
-    self.instanceid = next(samquerysource._instanceid)
+    self.instanceid = next(SAMQuerySource._instanceid)
     self.user = os.getenv('USER') or os.getenv('GRID_USER')
     self.checkDefinition = False
     self.checkSnapshot = False
@@ -254,13 +254,13 @@ class samquerysource(samprojectsource):
     projname = "%s_pandana_proj%d_%s" % (self.user, self.instanceid, hashlib.md5(batchname).hexdigest())
     uniqueid = "time"+datetime.now().strftime('%Y%m%d_%H%M%S')
     checkprojid = "_time"
-    MAX_PROJECTS = samquerysource._MAX_INT_PROJECTS
+    MAX_PROJECTS = SAMQuerySource._MAX_INT_PROJECTS
    
     # CLUSTER is unique for every job. Therefore, create a new project for every new submission.
     if self.isgrid: 
       projname += "_cluster%s" % os.getenv('CLUSTER')
       checkprojid = "_cluster"
-      MAX_PROJECTS = samquerysource._MAX_GRID_PROJECTS
+      MAX_PROJECTS = SAMQuerySource._MAX_GRID_PROJECTS
 
     projlist = self.SAM.listProjects(defname=self.definition, snapshot_id=self.snapshot_id, state='running')
     projexist = [projname in l for l in projlist]
@@ -295,10 +295,10 @@ class samquerysource(samprojectsource):
       projname = projname+"_"+uniqueid
  
     # Establish an IFDH process over it 
-    samprojectsource.__init__(self, projname, self.limit)
+    SAMProjectSource.__init__(self, projname, self.limit)
     return
 
-class sourcewrapper():
+class SourceWrapper():
   def __init__(self, query, stride=1, offset = 0, limit = None):
     self.query = query
     self.stride = stride
@@ -361,7 +361,7 @@ class sourcewrapper():
       filelist = self.query[self.offset::self.stride]
       if self.limit: filelist = filelist[:self.limit]
       print ("Running over list of files")
-      return listsource(filelist)
+      return ListSource(filelist)
 
     elif self.isglob():
       if os.getenv('PANDANA_STRIDE'):
@@ -372,7 +372,7 @@ class sourcewrapper():
         self.offset = int(os.getenv('PANDANA_OFFSET'))
       
       print ("Running over list of files matching glob")
-      return globsource(self.query, self.stride, self.offset, self.limit)
+      return GlobSource(self.query, self.stride, self.offset, self.limit)
     
     elif self.isproj():
       if self.stride > 1 or self.offset > 0:
@@ -384,7 +384,7 @@ class sourcewrapper():
       if not self.limit: self.limit = -1
       
       print(("Running over SAM project with name %s" % self.query))
-      return samprojectsource(self.query, self.limit)
+      return SAMProjectSource(self.query, self.limit)
     
     elif self.issamquery():
       if os.getenv('PANDANA_LIMIT'):
@@ -397,7 +397,7 @@ class sourcewrapper():
         self.query += ' with limit %d' % self.limit
       
       print(("Running over list of files matching SAM query '%s'" % self.query))
-      return samquerysource(self.query)
+      return SAMQuerySource(self.query)
     
     else:
       print ("Invalid Loader query!")

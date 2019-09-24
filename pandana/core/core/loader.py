@@ -3,14 +3,11 @@ import time
 import h5py
 import pandas as pd
 
-from pandana import SourceWrapper, KL, KLN, KLS, dfproxy
-
+from pandana import SourceWrapper, KL, KLN, KLS, DFProxy
 
 class Loader():
     def __init__(self, filesource, stride = 1, offset = 0, limit = None, index=None):
-
         self._files = SourceWrapper(filesource, stride, offset, limit)
-
         # _tables stores the entire dataset read from file
         # index key holds the global index range to be accessed from the dataset by a cut/var
         self._tables = {'indices':0}
@@ -19,7 +16,6 @@ class Loader():
         self.cutdefs = []
         self.index=index
         self.dflist = {}
-
         # add an extra var from spilltree to keep track of exposure
         self.sum_POT()
 
@@ -56,7 +52,7 @@ class Loader():
             index = KL if key.startswith('rec') else KLN if key.startswith('neutrino') else KLS
             if self.index and key.startswith('rec'):
               index = self.index
-            self[key] = dfproxy(columns=index)
+            self[key] = DFProxy(columns=index)
         # assume key is a filtered index range after a cut
         if type(key) is not str:
             self._tables['indices'] = key
@@ -74,6 +70,10 @@ class Loader():
             return dfslice
 
     def setupGo(self):
+        """
+        Call the SourceWrapper for the file to be processed.
+        :return: None
+        """
         if self.gone:
             return
         self.gone = True
@@ -91,6 +91,10 @@ class Loader():
         self.openfile.close()
 
     def readData(self):
+        '''
+        Reads the data in each dataset that has been prepared for reading.
+        :return: None
+        '''
         for key in self._tables:
             if key is 'indices':
                 continue

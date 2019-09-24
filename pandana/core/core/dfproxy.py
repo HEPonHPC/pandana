@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 
-class dfproxy(pd.DataFrame):
+class DFProxy(pd.DataFrame):
     _internal_names = pd.DataFrame._internal_names + ['_proxycols']
     _internal_names_set = set(_internal_names)
 
@@ -10,7 +10,7 @@ class dfproxy(pd.DataFrame):
     # needed before Go() so Loader knows what to load
     @property
     def _constructor(self):
-        return dfproxy
+        return DFProxy
 
     def __init__(self, data=None, **kwargs):
         if data is None:

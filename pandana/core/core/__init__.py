@@ -4,7 +4,7 @@ import h5py
 
 from pandana.core.core.cut import Cut
 
-from pandana.core.core.dfproxy import dfproxy
+from pandana.core.core.dfproxy import DFProxy
 
 # How to index the data
 KL = ['run', 'subrun', 'cycle', 'evt', 'subevt']

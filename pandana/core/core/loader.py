@@ -127,7 +127,14 @@ class Loader():
             spec.fill()
 
     def Go(self):
+        '''
+        Iterate through all associated files, reading all required data. When done, fill all specified spectra.
+        :return: None
+        '''
+        # TODO: Consider accumulating the results into spectra file-by-file, rather than reading all files before
+        # filling any spectra.
         t0 = time.time()
+
         self.setupGo()
         file_idx = 0
         while True:

@@ -1,3 +1,4 @@
 pandas
 h5py
 mpi4py
+numpy

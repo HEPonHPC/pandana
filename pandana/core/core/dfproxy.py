@@ -28,7 +28,7 @@ class DFProxy(pd.DataFrame):
         if type(key) is list and not set(key)<=set(self._proxycols):
             for k in key:
                 self._proxycols.append(k)
-                self.__setitem__(k, np.nan)
+                self.__setitem__(k, np.nan) # Default values are floating point
             return self.__getitem__(key)
         # assume dataframe is being sliced inside cut/var, don't do anything
         if type(key) is not str and type(key) is not list:

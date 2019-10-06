@@ -1,6 +1,7 @@
 import time
 import h5py
 import pandas as pd
+from mpi4py import MPI
 
 from pandana import SourceWrapper, KL, KLN, KLS, DFProxy
 
@@ -95,24 +96,29 @@ class Loader():
         Reads the data in each dataset that has been prepared for reading.
         :return: None
         '''
-        for key in self._tables:
-            if key is 'indices':
+        for tablename in self._tables:
+            if tablename is 'indices':
                 continue
-            if not key in self.dflist:
-                self.dflist[key] = []
+            if not tablename in self.dflist:
+                self.dflist[tablename] = []
             # branches from cache
-            group = self.openfile.get(key)
-            values = {}
+            group = self.openfile.get(tablename)
             # leaves from cache
-            keycache = self._tables[key]._proxycols
-            for k in keycache:
-                dataset = group.get(k)[()]
-                if dataset.shape[1] == 1:
-                    dataset = dataset.flatten()
-                else:
-                    dataset = list(dataset)
-                values[k] = dataset
-            self.dflist[key].append(pd.DataFrame(values))
+            values = {k: self._readDataset(group, k) for k in self._tables[tablename]._proxycols}
+            self.dflist[tablename].append(pd.DataFrame(values))
+
+    def _readDataset(self, group, key):
+        # Determine range to be read here.
+        # Regardless of the dataset, we want to read all the entries corresponding to the range of events
+        # (not runs, subruns, or subevents, but events) we are to process.
+        # dataset is a numpy.array, not a h5py.Dataset.
+        ds = group.get(key)  # ds is a h5py.Dataset
+        dataset = ds[()]  # read the whole dataset. Fails if it is non-scalar.
+        if dataset.shape[1] == 1:
+            dataset = dataset.flatten()
+        else:
+            dataset = list(dataset)  # Can this ever be called? What would the global result be?
+        return dataset
 
     def fillSpectra(self):
         for key in self.dflist:

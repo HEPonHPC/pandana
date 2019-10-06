@@ -213,9 +213,12 @@ kNumuOptimizedContainFD = Cut(kNumuOptimizedContainFD)
 kNumuContainFD = kNumuProngsContainFD & kNumuOptimizedContainFD 
 
 kNumuNoPIDFD = kNumuQuality & kNumuContainFD
-# ND 
+# ND
 def kNumuContainND(tables):
-    check = tables['rec.vtx.elastic']['rec.vtx.elastic_idx'] == 0 
+    # check is a pandas.core.series.Series.
+    # it will have a MultiIndex with names 'run', 'subrun', 'cycle', 'evt' and 'subevt'.
+    check = tables['rec.vtx.elastic']['rec.vtx.elastic_idx'] == 0
+
     shw_df = tables['rec.vtx.elastic.fuzzyk.png.shwlid'][check]
     shw_df_trans = shw_df[['start.y','stop.y', 'start.x', 'stop.x']]
     shw_df_long = shw_df[['start.z', 'stop.z']]

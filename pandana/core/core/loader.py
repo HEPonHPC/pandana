@@ -1,3 +1,4 @@
+import collections
 import time
 import h5py
 import pandas as pd
@@ -16,7 +17,7 @@ class Loader():
         self.histdefs = []
         self.cutdefs = []
         self.index=index
-        self.dflist = {}
+        self.dflist = collections.defaultdict(list)
         # add an extra var from spilltree to keep track of exposure
         self.sum_POT()
 
@@ -99,8 +100,6 @@ class Loader():
         for tablename in self._tables:
             if tablename is 'indices':
                 continue
-            if not tablename in self.dflist:
-                self.dflist[tablename] = []
             # branches from cache
             group = self.openfile.get(tablename)
             # leaves from cache

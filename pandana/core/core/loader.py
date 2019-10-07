@@ -92,7 +92,7 @@ class Loader():
     def closeFile(self):
         self.openfile.close()
 
-    def readData(self):
+    def createDataFrames(self):
         '''
         Reads the data in each dataset that has been prepared for reading.
         :return: None
@@ -106,12 +106,12 @@ class Loader():
             values = {k: self._readDataset(group, k) for k in self._tables[tablename]._proxycols}
             self.dflist[tablename].append(pd.DataFrame(values))
 
-    def _readDataset(self, group, key):
+    def _readDataset(self, group, datasetname):
         # Determine range to be read here.
         # Regardless of the dataset, we want to read all the entries corresponding to the range of events
         # (not runs, subruns, or subevents, but events) we are to process.
         # dataset is a numpy.array, not a h5py.Dataset.
-        ds = group.get(key)  # ds is a h5py.Dataset
+        ds = group.get(datasetname)  # ds is a h5py.Dataset
         dataset = ds[()]  # read the whole dataset. Fails if it is non-scalar.
         if dataset.shape[1] == 1:
             dataset = dataset.flatten()
@@ -146,7 +146,7 @@ class Loader():
           try:
             fname = self.getFile()
             self.setFile(h5py.File(fname, 'r'))
-            self.readData()
+            self.createDataFrames()
             self.closeFile()
 
             file_idx += 1
@@ -195,7 +195,7 @@ class AssociateLoader(Loader):
             for ldr in self.loaders:
               ldr.gone = True
               ldr.setFile(self.openfile)
-              ldr.readData()
+              ldr.createDataFrames()
             self.closeFile()
             file_idx += 1
           except StopIteration:

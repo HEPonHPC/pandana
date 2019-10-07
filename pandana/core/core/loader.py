@@ -94,17 +94,21 @@ class Loader():
 
     def createDataFrames(self):
         '''
-        Reads the data in each dataset that has been prepared for reading.
+        Create the DataFrames corresponding to the current open file.
+        This populates self.dflist.
         :return: None
         '''
         for tablename in self._tables:
             if tablename is 'indices':
                 continue
-            # branches from cache
-            group = self.openfile.get(tablename)
-            # leaves from cache
-            values = {k: self._readDataset(group, k) for k in self._tables[tablename]._proxycols}
-            self.dflist[tablename].append(pd.DataFrame(values))
+            self.createDataFrame(tablename)
+
+    def createDataFrame(self, tablename):
+        # branches from cache
+        group = self.openfile.get(tablename)
+        # leaves from cache
+        values = {k: self._readDataset(group, k) for k in self._tables[tablename]._proxycols}
+        self.dflist[tablename].append(pd.DataFrame(values))
 
     def _readDataset(self, group, datasetname):
         # Determine range to be read here.

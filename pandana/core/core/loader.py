@@ -5,6 +5,7 @@ import pandas as pd
 from mpi4py import MPI
 
 from pandana import SourceWrapper, KL, KLN, KLS, DFProxy
+from pandana import utils
 
 class Loader():
 
@@ -92,31 +93,45 @@ class Loader():
     def closeFile(self):
         self.openfile.close()
 
+    def calculateEventRange(self, group, rank, nranks):
+        # TODO: When refactoring, note that this method makes no use of 'self'. It should become a free
+        # function in the right place.
+        begin, end = utils.mpiutils.calculate_slice_for_rank(rank, nranks, group['evt'].size)
+        span = group['evt'][begin : end]
+        return span[0], span[-1]
+
     def createDataFrames(self):
         '''
         Create the DataFrames corresponding to the current open file.
         This populates self.dflist.
         :return: None
         '''
+        comm = MPI.COMM_WORLD
+        beginEvt, endEvt = self.calculateEventRange(self.openfile.get('spill'), comm.rank, comm.size)
         for tablename in self._tables:
             if tablename is 'indices':
                 continue
-            self.createDataFrame(tablename)
+            self.createDataFrame(tablename, beginEvt, endEvt)
 
-    def createDataFrame(self, tablename):
+    def createDataFrame(self, tablename, beginEvt, endEvt):
+        # TODO: figure out how to make use of beginEvt and endEvt.
         # branches from cache
         group = self.openfile.get(tablename)
+        evtnums = group['evt'][()]
+        n_events = evtnums.size
+
         # leaves from cache
-        values = {k: self._readDataset(group, k) for k in self._tables[tablename]._proxycols}
+        values = {k: self._readDataset(group, k, beginRow, endRow) for k in self._tables[tablename]._proxycols}
         self.dflist[tablename].append(pd.DataFrame(values))
 
-    def _readDataset(self, group, datasetname):
+    def _readDataset(self, group, datasetname, begin, end):
         # Determine range to be read here.
         # Regardless of the dataset, we want to read all the entries corresponding to the range of events
         # (not runs, subruns, or subevents, but events) we are to process.
         # dataset is a numpy.array, not a h5py.Dataset.
         ds = group.get(datasetname)  # ds is a h5py.Dataset
-        dataset = ds[()]  # read the whole dataset. Fails if it is non-scalar.
+        #dataset = ds[()]  # read the whole dataset. Fails if it is non-scalar.
+        dataset = ds[begin:end]
         if dataset.shape[1] == 1:
             dataset = dataset.flatten()
         else:

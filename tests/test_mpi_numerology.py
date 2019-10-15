@@ -23,9 +23,8 @@ class TestCalculateSliceForRank(unittest.TestCase):
         self.assertEqual(calculate_slice_for_rank(3, 4, 11), (9, 11))
 
     def test_too_many_ranks(self):
-        self.assertEqual(calculate_slice_for_rank(0, 3, 1), (0, 1))
-        self.assertEqual(calculate_slice_for_rank(1, 3, 1), (1, 1))
-        self.assertEqual(calculate_slice_for_rank(2, 3, 1), (1, 1))
+        with self.assertRaises(ValueError):
+            calculate_slice_for_rank(0, 3, 1)
 
     def test_one_slot_per_rank(self):
         for myrank in range(0, 100):

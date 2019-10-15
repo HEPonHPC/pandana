@@ -2,10 +2,35 @@ import collections
 import time
 import h5py
 import pandas as pd
+import numpy as np
 from mpi4py import MPI
 
 from pandana import SourceWrapper, KL, KLN, KLS, DFProxy
 from pandana import utils
+
+
+def readDatasetFromGroup(group, datasetname, begin, end):
+    # Determine range to be read here.
+    # Regardless of the dataset, we want to read all the entries corresponding to the range of events
+    # (not runs, subruns, or subevents, but events) we are to process.
+    # dataset is a numpy.array, not a h5py.Dataset.
+    ds = group.get(datasetname)  # ds is a h5py.Dataset
+    # dataset = ds[()]  # read the whole dataset. Fails if it is non-scalar.
+    dataset = ds[begin:end]
+    if dataset.shape[1] == 1:
+        dataset = dataset.flatten()
+    else:
+        dataset = list(dataset)  # Can this ever be called? What would the global result be?
+    return dataset
+
+def createDataFrameFromFile(current_file, tablename, proxycols, begin_evt, end_evt):
+    # branches from cache
+    group = current_file.get(tablename)
+    event_numbers = group['evt'][()].flatten()
+    begin_row, end_row = event_numbers.searchsorted([begin_evt, end_evt+1])
+    # leaves from cache
+    values = {k: readDatasetFromGroup(group, k, begin_row, end_row) for k in proxycols}
+    return pd.DataFrame(values)
 
 class Loader():
 
@@ -97,8 +122,9 @@ class Loader():
         # TODO: When refactoring, note that this method makes no use of 'self'. It should become a free
         # function in the right place.
         begin, end = utils.mpiutils.calculate_slice_for_rank(rank, nranks, group['evt'].size)
-        span = group['evt'][begin : end]
-        return span[0], span[-1]
+        span = group['evt'][begin : end].flatten()
+        b, e = span[0], span[-1]
+        return b, e
 
     def createDataFrames(self):
         '''
@@ -107,36 +133,16 @@ class Loader():
         :return: None
         '''
         comm = MPI.COMM_WORLD
-        beginEvt, endEvt = self.calculateEventRange(self.openfile.get('spill'), comm.rank, comm.size)
+        begin_evt, end_evt = self.calculateEventRange(self.openfile.get('spill'), comm.rank, comm.size)
         for tablename in self._tables:
             if tablename is 'indices':
                 continue
-            self.createDataFrame(tablename, beginEvt, endEvt)
+            new_df = createDataFrameFromFile(self.openfile, tablename, self._tables[tablename]._proxycols, begin_evt, end_evt)
+            self.dflist[tablename].append(new_df)
 
-    def createDataFrame(self, tablename, beginEvt, endEvt):
-        # TODO: figure out how to make use of beginEvt and endEvt.
-        # branches from cache
-        group = self.openfile.get(tablename)
-        evtnums = group['evt'][()]
-        n_events = evtnums.size
 
-        # leaves from cache
-        values = {k: self._readDataset(group, k, beginRow, endRow) for k in self._tables[tablename]._proxycols}
-        self.dflist[tablename].append(pd.DataFrame(values))
 
-    def _readDataset(self, group, datasetname, begin, end):
-        # Determine range to be read here.
-        # Regardless of the dataset, we want to read all the entries corresponding to the range of events
-        # (not runs, subruns, or subevents, but events) we are to process.
-        # dataset is a numpy.array, not a h5py.Dataset.
-        ds = group.get(datasetname)  # ds is a h5py.Dataset
-        #dataset = ds[()]  # read the whole dataset. Fails if it is non-scalar.
-        dataset = ds[begin:end]
-        if dataset.shape[1] == 1:
-            dataset = dataset.flatten()
-        else:
-            dataset = list(dataset)  # Can this ever be called? What would the global result be?
-        return dataset
+
 
     def fillSpectra(self):
         for key in self.dflist:

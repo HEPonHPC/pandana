@@ -1,3 +1,6 @@
+import numpy
+
+
 def calculate_slice_for_rank(myrank, nranks, arraysz):
     """Calculate the slice indices for array processing in MPI programs.
 
@@ -8,7 +11,9 @@ def calculate_slice_for_rank(myrank, nranks, arraysz):
     """
 
     if myrank >= nranks:
-        raise Exception("myrank must be less than nranks")
+        raise ValueError("myrank must be less than nranks")
+    if nranks > arraysz:
+        raise ValueError("nranks must not be larger than array size")
 
     # Each rank will get either minsize or minsize+1 elements to work on.
     minsize, leftovers = divmod(arraysz, nranks)

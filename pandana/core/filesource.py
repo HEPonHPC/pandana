@@ -360,7 +360,6 @@ class SourceWrapper():
       
       filelist = self.query[self.offset::self.stride]
       if self.limit: filelist = filelist[:self.limit]
-      print ("Running over list of files")
       return ListSource(filelist)
 
     elif self.isglob():
@@ -371,7 +370,6 @@ class SourceWrapper():
       if os.getenv('PANDANA_OFFSET'):
         self.offset = int(os.getenv('PANDANA_OFFSET'))
       
-      print ("Running over list of files matching glob")
       return GlobSource(self.query, self.stride, self.offset, self.limit)
     
     elif self.isproj():
@@ -383,7 +381,6 @@ class SourceWrapper():
       
       if not self.limit: self.limit = -1
       
-      print(("Running over SAM project with name %s" % self.query))
       return SAMProjectSource(self.query, self.limit)
     
     elif self.issamquery():
@@ -396,7 +393,6 @@ class SourceWrapper():
       if self.limit:
         self.query += ' with limit %d' % self.limit
       
-      print(("Running over list of files matching SAM query '%s'" % self.query))
       return SAMQuerySource(self.query)
     
     else:

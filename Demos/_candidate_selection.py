@@ -45,7 +45,7 @@ from pandana.core import *
 from pandana.core.core.loader import Loader
 from pandana.core.core.var import Var
 from pandana.cut.analysis_cuts import kNumuCutND
-
+from mpi4py import MPI
 
 def main(input_files, max_files):
     tables = Loader(input_files, limit=max_files)
@@ -53,8 +53,11 @@ def main(input_files, max_files):
     my_spectrum = Spectrum(tables, kNumuCutND, energy)
     tables.Go()
 
-    print('my_spectrum internal dataframe: ')
-    print((my_spectrum.df().head()))
+    #print('my_spectrum internal dataframe: ')
+    #print((my_spectrum.df().head()))
 
     n, _ = my_spectrum.histogram(bins=50, range=(1, 4))
-    print('Selected ', n.sum(), ' events from ', my_spectrum.POT(), '  POT.')
+    total_n = MPI.COMM_WORLD.reduce(n, op=MPI.SUM, root = 0)
+    total_pot = MPI.COMM_WORLD.reduce(my_spectrum.POT(), op=MPI.SUM, root = 0)
+    if MPI.COMM_WORLD.rank == 0:
+        print('Selected ', total_n.sum(), ' events from ', total_pot, '  POT.')

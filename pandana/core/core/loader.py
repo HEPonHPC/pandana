@@ -2,7 +2,6 @@ import collections
 import time
 import h5py
 import pandas as pd
-import numpy as np
 from mpi4py import MPI
 
 from pandana import SourceWrapper, KL, KLN, KLS, DFProxy
@@ -107,8 +106,6 @@ class Loader():
         self.gone = True
         self._filegen = self._files()
 
-        print(("Reading data from %s files : \n" % self._filegen.nFiles()))
-
     def getFile(self):
         return self._filegen()
 
@@ -152,7 +149,6 @@ class Loader():
         # Compute POT and then fill spectra
         self.sum_POT()
 
-        print(("Filling %s spectra\n" % len(self.histdefs)))
         for spec in self.histdefs:
             spec.fill()
 
@@ -181,7 +177,6 @@ class Loader():
         self.fillSpectra()
         # cleanup
         self.cleanup()
-        print(("\nTotal time : %s sec\n" % (time.time() - t0)))
 
     def cleanup(self):
         # free up some memory
@@ -227,12 +222,9 @@ class AssociateLoader(Loader):
             break
         ldr_idx = 1
         for ldr in self.loaders:
-          print ("\n------------------------------")
-          print(("Filling spectra for Loader %d" % ldr_idx))
           ldr.fillSpectra()
           ldr.cleanup()
           ldr_idx += 1
-        print(("\nTotal time : %s sec\n" % (time.time() - t0)))
 
 
 class InteractiveLoader():

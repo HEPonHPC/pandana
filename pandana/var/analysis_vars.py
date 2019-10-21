@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from pandana.core.core import KL
+from pandana.core.core.indices import KL
 from pandana.core.core.var import Var
 from pandana.utils import *
 

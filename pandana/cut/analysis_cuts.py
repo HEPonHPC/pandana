@@ -1,7 +1,8 @@
 import pandas as pd
 import numpy as np
 
-from pandana.core.core import Cut, KL
+from pandana.core.core import Cut
+from pandana.core.core.indices import KL
 from pandana.utils.enums import *
 from pandana.var.analysis_vars import *
 

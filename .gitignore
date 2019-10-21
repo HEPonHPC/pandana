@@ -3,3 +3,7 @@ Data/
 .idea
 *.prof
 *.pyc
+rsconnect/
+*.log
+.Rhistory
+*.html

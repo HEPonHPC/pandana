@@ -12,7 +12,6 @@ class TestLoader(TestCase):
     def setUp(self):
         self.loader = Loader(None)
         self.file = h5.File('fake', 'w', driver='core', backing_store=False)
-        self.loader.openfile = self.file
         self.nranks = 3
         self.run_id = 12
         self.subrun_id = 2

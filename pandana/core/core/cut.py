@@ -4,7 +4,8 @@ import pandas as pd
 
 class Cut():
     def __init__(self, cut, invert=False):
-        if type(cut) is not list: cut = [cut]
+        if type(cut) is not list:
+            cut = [cut]
         if type(invert) is not list: invert = [invert]
         assert len(cut) == len(invert), "invalid cut definition!"
 

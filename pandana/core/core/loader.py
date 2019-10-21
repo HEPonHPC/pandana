@@ -109,12 +109,6 @@ class Loader():
     def getFile(self):
         return self._filegen()
 
-    def setFile(self, f):
-        self.openfile = f
-
-    def closeFile(self):
-        self.openfile.close()
-
     def calculateEventRange(self, group, rank, nranks):
         # TODO: When refactoring, note that this method makes no use of 'self'. It should become a free
         # function in the right place.
@@ -123,28 +117,26 @@ class Loader():
         b, e = span[0], span[-1]
         return b, e
 
-    def createDataFrames(self):
+    def createDataFrames(self, aFile):
         '''
-        Create the DataFrames corresponding to the current open file.
+        Create the DataFrames corresponding to aFile, which must be open.
         This populates self.dflist.
         :return: None
         '''
         comm = MPI.COMM_WORLD
-        begin_evt, end_evt = self.calculateEventRange(self.openfile.get('spill'), comm.rank, comm.size)
+        begin_evt, end_evt = self.calculateEventRange(aFile.get('spill'), comm.rank, comm.size)
         for tablename in self._tables:
             if tablename is 'indices':
                 continue
-            new_df = createDataFrameFromFile(self.openfile, tablename, self._tables[tablename]._proxycols, begin_evt, end_evt)
+            new_df = createDataFrameFromFile(aFile, tablename, self._tables[tablename]._proxycols, begin_evt, end_evt)
             self.dflist[tablename].append(new_df)
-
-
-
-
 
     def fillSpectra(self):
         for key in self.dflist:
             # set index for all dataframes
+            assert(isinstance(self[key], DFProxy))
             self[key] = pd.concat(self.dflist[key])
+            assert(isinstance(self[key], pd.DataFrame))
         self.dflist = {}
         # Compute POT and then fill spectra
         self.sum_POT()
@@ -166,10 +158,8 @@ class Loader():
         while True:
           try:
             fname = self.getFile()
-            self.setFile(h5py.File(fname, 'r'))
-            self.createDataFrames()
-            self.closeFile()
-
+            with h5py.File(fname, 'r') as current_file:
+                self.createDataFrames(current_file)
             file_idx += 1
           except StopIteration:
             break

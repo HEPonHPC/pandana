@@ -26,8 +26,8 @@ def readDatasetFromGroup(group, datasetname, begin, end):
 def createDataFrameFromFile(current_file, tablename, proxycols, begin_evt, end_evt):
     # branches from cache
     group = current_file.get(tablename)
-    event_numbers = group['evt'][()].flatten()
-    begin_row, end_row = event_numbers.searchsorted([begin_evt, end_evt+1])
+    event_seq_numbers = group['evtseq'][()].flatten()
+    begin_row, end_row = event_seq_numbers.searchsorted([begin_evt, end_evt+1])
     # leaves from cache
     values = {k: readDatasetFromGroup(group, k, begin_row, end_row) for k in proxycols}
     return pd.DataFrame(values)
@@ -113,8 +113,8 @@ class Loader():
     def calculateEventRange(self, group, rank, nranks):
         # TODO: When refactoring, note that this method makes no use of 'self'. It should become a free
         # function in the right place.
-        begin, end = utils.mpiutils.calculate_slice_for_rank(rank, nranks, group['evt'].size)
-        span = group['evt'][begin : end].flatten()
+        begin, end = utils.mpiutils.calculate_slice_for_rank(rank, nranks, group['evtseq'].size)
+        span = group['evtseq'][begin : end].flatten()
         b, e = span[0], span[-1]
         return b, e
 

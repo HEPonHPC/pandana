@@ -16,6 +16,7 @@ class TestLoader(TestCase):
         self.run_id = 12
         self.subrun_id = 2
         self.event_ids = [1, 2, 4, 5, 6, 11, 15]
+        self.event_id_to_evtseq = {eid: n for n, eid in enumerate(self.event_ids)}
         np.random.seed(123)
         self.create_spill_group()
         self.create_rec_energy_numu_group()
@@ -30,9 +31,11 @@ class TestLoader(TestCase):
         n_events = len(self.event_ids)
         shape = (n_events, 1)
         u4 = np.dtype('u4')
+        u8 = np.dtype('u8')
         self.spill_group.create_dataset('run', data=np.repeat(self.run_id, n_events), dtype=u4, shape=shape)
         self.spill_group.create_dataset('subrun', data=np.repeat(self.subrun_id, n_events), dtype=u4, shape=shape)
         self.spill_group.create_dataset('evt', data=np.array(self.event_ids), dtype=u4, shape=shape)
+        self.spill_group.create_dataset('evtseq', data=np.arange(n_events), dtype=u8, shape=shape)
         self.spill_group.create_dataset('spillpot', data=np.random.random(n_events), shape=shape)
 
     def create_rec_energy_numu_group(self):
@@ -49,8 +52,10 @@ class TestLoader(TestCase):
         n_slices = sum(slices_per_event)
         shape = (n_slices, 1)
         u4 = np.dtype('u4')
+        u8 = np.dtype('u8')
         self.rec_energy_numu_group.create_dataset('run', data=np.repeat(self.run_id, n_slices), dtype=u4, shape=shape)
-        self.rec_energy_numu_group.create_dataset('subrun', data=np.repeat(self.subrun_id, n_slices), dtype=u4, shape=shape)
+        self.rec_energy_numu_group.create_dataset('subrun', data=np.repeat(self.subrun_id, n_slices), dtype=u4,
+                                                  shape=shape)
 
         # Create indexing columns to keep data "lined up" across tables.
         evt_column = []
@@ -59,11 +64,19 @@ class TestLoader(TestCase):
             evt_column.append([event_id for _ in range(slices_this_event)])
             subevt_column.append([i for i in range(slices_this_event)])
 
-        self.rec_energy_numu_group.create_dataset('evt', data=np.array([item for sublist in evt_column for item in sublist]), dtype=u4, shape=shape)
-        self.rec_energy_numu_group.create_dataset('subevt', data=np.array([item for sublist in subevt_column for item in sublist]), dtype = u4, shape=shape)
+        self.rec_energy_numu_group.create_dataset('evt',
+                                                  data=np.array([item for sublist in evt_column for item in sublist]),
+                                                  dtype=u4, shape=shape)
+        self.rec_energy_numu_group.create_dataset('subevt', data=np.array(
+            [item for sublist in subevt_column for item in sublist]), dtype=u4, shape=shape)
+        self.rec_energy_numu_group.create_dataset('evtseq', data=np.array(
+            [self.event_id_to_evtseq[event_id] for event_id in self.rec_energy_numu_group['evt'][:].flatten()]),
+            dtype=u8, shape=shape)
         self.assertEqual(self.rec_energy_numu_group['evt'].size, self.rec_energy_numu_group['subevt'].size)
-        self.assertTrue(np.all(self.rec_energy_numu_group['evt'][()].flatten() == np.array([1,1,1,1,1,4,4,4,6,6,6,11])))
-        self.assertTrue(np.all(self.rec_energy_numu_group['subevt'][()].flatten() == np.array([0,1,2,3,4,0,1,2,0,1,2,0])))
+        self.assertTrue(
+            np.all(self.rec_energy_numu_group['evt'][()].flatten() == np.array([1, 1, 1, 1, 1, 4, 4, 4, 6, 6, 6, 11])))
+        self.assertTrue(np.all(
+            self.rec_energy_numu_group['subevt'][()].flatten() == np.array([0, 1, 2, 3, 4, 0, 1, 2, 0, 1, 2, 0])))
 
         # Other columns are just random numbers...
         f4 = np.dtype('f4')
@@ -94,18 +107,18 @@ class TestLoader(TestCase):
 
     def test_calculateEventRange_simple(self):
         # Answers should be:
-        #   [1, 4]
+        #   [0, 2]
+        #   [3, 4]
         #   [5, 6]
-        #   [11, 15]
         b, e = self.loader.calculateEventRange(self.spill_group, 0, self.nranks)
-        self.assertEqual(b, 1)
-        self.assertEqual(e, 4)
+        self.assertEqual(b, 0)
+        self.assertEqual(e, 2)
         b, e = self.loader.calculateEventRange(self.spill_group, 1, self.nranks)
+        self.assertEqual(b, 3)
+        self.assertEqual(e, 4)
+        b, e = self.loader.calculateEventRange(self.spill_group, 2, self.nranks)
         self.assertEqual(b, 5)
         self.assertEqual(e, 6)
-        b, e = self.loader.calculateEventRange(self.spill_group, 2, self.nranks)
-        self.assertEqual(b, 11)
-        self.assertEqual(e, 15)
 
     def test_calculateEventRange_too_many_ranks(self):
         too_many_ranks = len(self.event_ids) + 1
@@ -129,14 +142,14 @@ class TestLoader(TestCase):
     def test_createRecEnergyNumuDataFrame(self):
         print('Full dataframe')
         print(pandana.core.loader.createDataFrameFromFile(self.file, 'rec.energy.numu',
-                                                          ['run', 'subrun', 'evt', 'subevt', 'trkccE'],
+                                                          ['run', 'subrun', 'evt', 'subevt', 'evtseq', 'trkccE'],
                                                           0, 100))
 
         dflist = []
         for rank in range(self.nranks):
             b, e = self.loader.calculateEventRange(self.spill_group, rank, self.nranks)
             dflist.append(pandana.core.loader.createDataFrameFromFile(self.file, 'rec.energy.numu',
-                                                                      ['run', 'subrun', 'evt', 'subevt', 'trkccE'],
+                                                                      ['run', 'subrun', 'evt', 'subevt', 'evtseq', 'trkccE'],
                                                                       b, e))
         all(self.assertIsInstance(df, pd.DataFrame) for df in dflist)
         num_rows_in_dataframes = [len(df.index) for df in dflist]

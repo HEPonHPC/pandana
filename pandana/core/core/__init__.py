@@ -87,6 +87,10 @@ class Spectrum():
 # For constructing spectra without having to fill
 class FilledSpectrum(Spectrum):
     def __init__(self, df, pot, weight=None):
+        '''
+        We intentionally do *not* call __init__ on our base class, because Spectrum.__init__ is non-standard; it is
+        expected to be called on an already-constructed Spectrum object.
+        '''
         self._df = df
         self._POT = pot
 

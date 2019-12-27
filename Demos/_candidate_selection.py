@@ -42,8 +42,8 @@ h5py.Dataset = MonkeyPatchedDataset
 
 from context import pandana
 from pandana.core import *
-from pandana.core.core.loader import Loader
-from pandana.core.core.var import Var
+from pandana.core.loader import Loader
+from pandana.core.var import Var
 from pandana.cut.analysis_cuts import kNumuCutND
 from mpi4py import MPI
 

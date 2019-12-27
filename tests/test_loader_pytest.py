@@ -1,8 +1,8 @@
 from .context import pandana
 from unittest import TestCase
-import pandana.core.core.loader
-from pandana.core.core.loader import Loader
-import pandana.core.core.loader
+import pandana.core.loader
+from pandana.core.loader import Loader
+import pandana.core.loader
 import h5py as h5
 import numpy as np
 import pandas as pd

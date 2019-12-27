@@ -1,5 +1,5 @@
-from pandana.core.core.indices import KL
-from pandana.core.core.var import Var
+from pandana.core.indices import KL
+from pandana.core.var import Var
 
 KLP = KL + ['rec.vtx.elastic.fuzzyk.png_idx']
 

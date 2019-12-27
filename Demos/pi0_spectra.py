@@ -8,8 +8,8 @@
 # Includes
 import sys
 
-from pandana.core.core.loader import Loader
-from pandana.core.core.var import Var
+from pandana.core.loader import Loader
+from pandana.core.var import Var
 
 sys.path.append('../..')
 from pandana.core import *

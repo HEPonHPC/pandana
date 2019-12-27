@@ -5,7 +5,7 @@ import pandas as pd
 from mpi4py import MPI
 
 from pandana import SourceWrapper, DFProxy
-from pandana.core.core.indices import KL, KLN, KLS
+from pandana.core.indices import KL, KLN, KLS
 from pandana import utils
 
 

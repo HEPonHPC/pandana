@@ -1,4 +1,4 @@
-from pandana.core.core.indices import KL
+from pandana.core.indices import KL
 from pandana.weight.xsec_utils import *
 
 import numpy as np

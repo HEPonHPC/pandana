@@ -3,6 +3,12 @@ import numpy as np
 
 class Spectrum():
     def __init__(self, tables, cut, var, weight=None, name=None):
+        """Initialize a Spectrum, registering it with the given Loader.
+
+        Both the newly-created Spectrum and the given Cut are registered
+        with the given Loader.
+
+        """
         self._name = name
 
         # associate this Spectrum, cut with Loader for filling

@@ -7,3 +7,7 @@ rsconnect/
 *.log
 .Rhistory
 *.html
+.Rproj.user/
+PerformanceMeasurementsScratchpad_cache/
+PerformanceMeasurementsScratchpad_files/
+pandana.Rproj

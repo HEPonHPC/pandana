@@ -1,7 +1,7 @@
 import numpy as np
 
 from pandana.utils.enums import *
-from pandana.utils.misc import GetPeriod
+from nova.utils.misc import GetPeriod
 
 # For the Numu Energy Estimator
 class SplineFit():

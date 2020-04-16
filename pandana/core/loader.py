@@ -94,7 +94,7 @@ class Loader():
             print("Warning! No data read for %s" % key)
             return self._tables[key]
         else:
-            dfslice = self._tables[key].loc[self._tables['indices']]
+            dfslice = self._tables[key].loc[self._tables[key].index.intersection(self._tables['indices'])]
             return dfslice
 
     def setupGo(self):

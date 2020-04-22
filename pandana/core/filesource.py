@@ -1,11 +1,6 @@
 import os
 import subprocess
 import sys
-from datetime import datetime
-from itertools import count
-import time
-import re
-import hashlib
 
 # Contains classes that return a generator over a file source 
 

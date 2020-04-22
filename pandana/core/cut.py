@@ -1,12 +1,19 @@
+'''This module defines the class Cut.
+'''
 import numpy as np
 import pandas as pd
 
 
 class Cut():
+    """Represents a selection criterion to be applied to a dataframe.
+
+
+    """
     def __init__(self, cut, invert=False):
-        if type(cut) is not list:
+        if not isinstance(cut, list):
             cut = [cut]
-        if type(invert) is not list: invert = [invert]
+        if not isinstance(invert, list):
+            invert = [invert]
         assert len(cut) == len(invert), "invalid cut definition!"
 
         self._cut = list(cut)
@@ -20,6 +27,7 @@ class Cut():
         self._cutid = [0]*len(self._cut)
 
     def reset_cutindices(self):
+        """Set _filter and _cutid to original state."""
         # need to reset after use by Loader
         self._filter = [0]*len(self._cut)
         self._cutid = [0]*len(self._cut)
@@ -37,7 +45,7 @@ class Cut():
         applycut = self._filter[self.filteridx]
 
         # cut is being computed for the first time
-        if cutidx is 0:
+        if cutidx == 0:
             cut0 = self._cut[self.filteridx](tables)
             if self._invert[self.filteridx]:
                 cut0 = ~cut0
@@ -57,12 +65,11 @@ class Cut():
         # if its not empty, run next cut on the filtered list rather than the entire dataset
         if len(self._cut) > self.filteridx and canfiltermore:
             return self(tables[cutidx])
-        else:
-            # use filtered index list for evaluation of the var that comes later
-            tables._tables['indices'] = cutidx
-            self.filteridx = 0
-            self.reset_cutindices()
-            return applycut
+        # use filtered index list for evaluation of the var that comes later
+        tables._tables['indices'] = cutidx
+        self.filteridx = 0
+        self.reset_cutindices()
+        return applycut
 
     def __and__(self, other):
         return Cut(self._cut + other._cut, self._invert + other._invert)
@@ -77,6 +84,6 @@ class Cut():
             tables._tables['indices'] = idx
             df2 = other(tables)
             # or operators are not commutative???
-            compare = pd.concat([df1,df2], axis=1, join='outer').fillna(False)
+            compare = pd.concat([df1, df2], axis=1, join='outer').fillna(False)
             return compare.any(axis=1)
         return Cut(orcut)

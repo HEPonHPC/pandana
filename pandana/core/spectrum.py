@@ -1,7 +1,11 @@
+"""This module provides the classes Spectrum and FilledSpectrum.
+"""
 import pandas as pd
 import numpy as np
 
 class Spectrum():
+    """Represents a histogram of some quantity.
+    """
     def __init__(self, tables, cut, var, weight=None, name=None):
         """Initialize a Spectrum, registering it with the given Loader.
 
@@ -10,6 +14,7 @@ class Spectrum():
 
         """
         self._name = name
+        self._POT = None
 
         # associate this Spectrum, cut with Loader for filling
         tables.add_spectrum(self)
@@ -34,12 +39,17 @@ class Spectrum():
         self._weight = pd.Series(1, self._df.index, name='weight')
         if weight:
             # apply all the weights
-            if type(weight) is list:
+            if isinstance(weight, list):
                 for w in weight:
                     self._weight = w(tables, self._weight)
-            else: self._weight = weight(tables, self._weight)
+            else:
+                self._weight = weight(tables, self._weight)
 
     def fill(self):
+        """Fill the spectrum.
+
+        It is required that Go has been called before fill is called.
+        """
         # Loader.Go() has been called
         self.__init__(self._tables, self._cutfcn, self._varfcn, weight=self._weightfcn, name=self._name)
 
@@ -72,12 +82,13 @@ class Spectrum():
     def entries(self):
         return self._df.shape[0]
 
-    def integral(self,POT=None):
-        if not POT: POT = self._POT
+    def integral(self, POT=None):
+        if not POT:
+            POT = self._POT
         return self._weight.sum()*POT/self._POT
 
-    def to_text(self, fileName, sep=' ', header=False):
-        self._df.to_csv(fileName, sep=sep, index=True, header=header)
+    def to_text(self, file_name, sep=' ', header=False):
+        self._df.to_csv(file_name, sep=sep, index=True, header=header)
 
     def __add__(self, b):
         df = pd.concat([self._df, b._df])
@@ -147,9 +158,11 @@ def save_tree(fname, spectra, groups, attrs=True):
     f.close()
 
 
-# Load spectra from a file. Takes one or a list of group names to read
 def load_spectra(fname, groups):
-    if not type(groups) is list: groups = [groups]
+    """Load a spectrum from a file.
+    """
+    if not isinstance(groups, list):
+        groups = [groups]
     
     # ah that's more like it
     store = pd.HDFStore(fname, 'r')
@@ -164,5 +177,6 @@ def load_spectra(fname, groups):
 
     store.close()
 
-    if len(groups) == 1: return ret[0]
+    if len(groups) == 1:
+        return ret[0]
     return ret

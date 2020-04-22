@@ -1,7 +1,14 @@
+"""This module provides the class Var."""
+
 from pandana import Cut
 
-
 class Var():
+    """Represents a variable.
+
+    A variable may be directly read from a dataframe,
+    of calulcated from one or more things that wereread,
+    or calculated from other Vars.
+    """
     def __init__(self, var):
         self._var = var
 

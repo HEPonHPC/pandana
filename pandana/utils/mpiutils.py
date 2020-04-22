@@ -1,5 +1,5 @@
-import numpy
-
+"""This module provides MPI utility functions.
+"""
 
 def calculate_slice_for_rank(myrank, nranks, arraysz):
     """Calculate the slice indices for array processing in MPI programs.

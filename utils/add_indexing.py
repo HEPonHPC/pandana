@@ -3,7 +3,7 @@
 The eid is calculated from the run/subrun/evt numbers in the group.
 """
 import h5py as h5
-from vfuncs import eid as make_eid, make_evtseq_map, apply_evtseq_map
+from .vfuncs import eid as make_eid, make_evtseq_map, apply_evtseq_map
 
 def add_eid(file):
     """

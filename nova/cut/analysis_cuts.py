@@ -3,8 +3,8 @@ import numpy as np
 
 from pandana.core import Cut
 from pandana.core.indices import KL
-from pandana.utils.enums import *
-from pandana.var.analysis_vars import *
+from nova.utils.enums import *
+from nova.var.analysis_vars import *
 
 kIsFD = kDetID == detector.kFD
 

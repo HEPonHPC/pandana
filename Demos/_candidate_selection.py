@@ -44,7 +44,7 @@ from context import pandana
 from pandana.core import *
 from pandana.core.loader import Loader
 from pandana.core.var import Var
-from pandana.cut.analysis_cuts import kNumuCutND
+from nova.cut.analysis_cuts import kNumuCutND
 from mpi4py import MPI
 
 def main(input_files, max_files):

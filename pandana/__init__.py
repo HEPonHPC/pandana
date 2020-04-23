@@ -11,6 +11,3 @@ import sys
 
 from pandana.core import *
 import pandana.utils
-import pandana.var
-import pandana.cut
-import pandana.weight

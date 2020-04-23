@@ -1,6 +1,6 @@
 import numpy as np
 
-from pandana.utils.enums import *
+from nova.utils.enums import *
 from nova.utils.misc import GetPeriod
 
 # For the Numu Energy Estimator

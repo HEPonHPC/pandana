@@ -1,6 +1,6 @@
 import numpy as np
 import os
-from pandana.utils.enums import *
+from nova.utils.enums import *
 import sys
 
 # Taken from https://cdcvs.fnal.gov/redmine/projects/novaart/repository/entry/trunk/CAFAna/Core/Utilities.cxx

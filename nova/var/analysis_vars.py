@@ -4,7 +4,7 @@ from pandana.core.indices import KL
 from pandana.core.var import Var
 from pandana.utils import *
 
-from pandana.var.numuE_utils import *
+from nova.var.numuE_utils import *
 
 # cvnProd3Train is messed up in the current iteration of files.
 kCVNe = Var(lambda tables: tables['rec.sel.cvn2017']['nueid'])

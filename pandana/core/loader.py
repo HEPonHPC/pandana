@@ -38,7 +38,7 @@ class Loader():
         self._files = SourceWrapper(filesource, stride, offset, limit)
         # _tables stores the entire dataset read from file
         # index key holds the global index range to be accessed from the dataset by a cut/var
-        self._tables = {'indices': 0}
+        self._tables = {'indices': None}
         self.gone = False
         self.histdefs = []
         self.cutdefs = []
@@ -63,7 +63,7 @@ class Loader():
 
     def reset_index(self):
         # reset after each Spectrum fill
-        self._tables['indices'] = 0
+        self._tables['indices'] = None
 
     def __setitem__(self, key, df):
         # set multiindex for recTree data
@@ -86,7 +86,7 @@ class Loader():
             self._tables['indices'] = key
             return self
         # no filtering
-        if self._tables['indices'] is 0:
+        if self._tables['indices'] is None:
             return self._tables[key]
         # use global index to slice dataframe requested
         elif self._tables[key].dropna().empty:
@@ -127,7 +127,7 @@ class Loader():
         comm = MPI.COMM_WORLD
         begin_evt, end_evt = self.calculateEventRange(aFile.get('spill'), comm.rank, comm.size)
         for tablename in self._tables:
-            if tablename is 'indices':
+            if tablename == 'indices':
                 continue
             new_df = createDataFrameFromFile(aFile, tablename, self._tables[tablename]._proxycols, begin_evt, end_evt)
             self.dflist[tablename].append(new_df)

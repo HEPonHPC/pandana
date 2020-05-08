@@ -10,7 +10,7 @@ import pandas as pd
 
 class TestLoader(TestCase):
     def setUp(self):
-        self.loader = Loader(None)
+        self.loader = Loader(None, idcol = 'evtseq')
         self.file = h5.File('fake', 'w', driver='core', backing_store=False)
         self.nranks = 3
         self.run_id = 12
@@ -130,7 +130,7 @@ class TestLoader(TestCase):
         for rank in range(self.nranks):
             b, e = self.loader.calculateEventRange(self.spill_group, rank, self.nranks)
             dflist.append(pandana.core.loader.createDataFrameFromFile(self.file, 'spill',
-                                                                      self.loader._tables['spill']._proxycols, b, e))
+                                                                      self.loader._tables['spill']._proxycols, b, e, 'evtseq'))
         all(self.assertIsInstance(df, pd.DataFrame) for df in dflist)
         num_rows_in_dataframes = [len(df.index) for df in dflist]
         print("createSpillDataFrame")
@@ -143,14 +143,15 @@ class TestLoader(TestCase):
         print('Full dataframe')
         print(pandana.core.loader.createDataFrameFromFile(self.file, 'rec.energy.numu',
                                                           ['run', 'subrun', 'evt', 'subevt', 'evtseq', 'trkccE'],
-                                                          0, 100))
+                                                          0, 100,
+                                                          'evtseq'))
 
         dflist = []
         for rank in range(self.nranks):
             b, e = self.loader.calculateEventRange(self.spill_group, rank, self.nranks)
             dflist.append(pandana.core.loader.createDataFrameFromFile(self.file, 'rec.energy.numu',
                                                                       ['run', 'subrun', 'evt', 'subevt', 'evtseq', 'trkccE'],
-                                                                      b, e))
+                                                                      b, e, 'evtseq'))
         all(self.assertIsInstance(df, pd.DataFrame) for df in dflist)
         num_rows_in_dataframes = [len(df.index) for df in dflist]
         for df in dflist:

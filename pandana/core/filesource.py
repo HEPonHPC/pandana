@@ -99,8 +99,7 @@ class SourceWrapper():
         self.limit = int(os.getenv('PANDANA_LIMIT'))
       if os.getenv('PANDANA_OFFSET'):
         self.offset = int(os.getenv('PANDANA_OFFSET'))
-      
-      filelist = self.query[self.offset::self.stride]
+      filelist = self.query[self.offset:self.stride]
       if self.limit: filelist = filelist[:self.limit]
       return ListSource(filelist)
 

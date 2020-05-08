@@ -23,10 +23,10 @@ def readDatasetFromGroup(group, datasetname, begin, end):
         dataset = list(dataset)  # Can this ever be called? What would the global result be?
     return dataset
 
-def createDataFrameFromFile(current_file, tablename, proxycols, begin_evt, end_evt):
+def createDataFrameFromFile(current_file, tablename, proxycols, begin_evt, end_evt, idcol):
     # branches from cache
     group = current_file.get(tablename)
-    event_seq_numbers = group['evtseq'][()].flatten()
+    event_seq_numbers = group[idcol][()].flatten()
     begin_row, end_row = event_seq_numbers.searchsorted([begin_evt, end_evt+1])
     # leaves from cache
     values = {k: readDatasetFromGroup(group, k, begin_row, end_row) for k in proxycols}
@@ -34,7 +34,8 @@ def createDataFrameFromFile(current_file, tablename, proxycols, begin_evt, end_e
 
 class Loader():
 
-    def __init__(self, filesource, stride = 1, offset = 0, limit = None, index=None):
+    def __init__(self, filesource, idcol, stride = 1, offset = 0, limit = None, index=None):
+        self.idcol = idcol
         self._files = SourceWrapper(filesource, stride, offset, limit)
         # _tables stores the entire dataset read from file
         # index key holds the global index range to be accessed from the dataset by a cut/var
@@ -113,8 +114,8 @@ class Loader():
     def calculateEventRange(self, group, rank, nranks):
         # TODO: When refactoring, note that this method makes no use of 'self'. It should become a free
         # function in the right place.
-        begin, end = utils.mpiutils.calculate_slice_for_rank(rank, nranks, group['evtseq'].size)
-        span = group['evtseq'][begin : end].flatten()
+        begin, end = utils.mpiutils.calculate_slice_for_rank(rank, nranks, group[self.idcol].size)
+        span = group[self.idcol][begin : end].flatten()
         b, e = span[0], span[-1]
         return b, e
 
@@ -129,7 +130,7 @@ class Loader():
         for tablename in self._tables:
             if tablename == 'indices':
                 continue
-            new_df = createDataFrameFromFile(aFile, tablename, self._tables[tablename]._proxycols, begin_evt, end_evt)
+            new_df = createDataFrameFromFile(aFile, tablename, self._tables[tablename]._proxycols, begin_evt, end_evt, self.idcol)
             self.dflist[tablename].append(new_df)
 
     def fillSpectra(self):

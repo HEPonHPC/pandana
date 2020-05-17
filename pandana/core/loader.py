@@ -78,11 +78,7 @@ class Loader():
         # actually build the cache before Go()
         # TODO: Clarify this: is the behavior of __getitem__ different before Go() is called and after it is called?
         if type(key) == str and not key in self._tables:
-            # Pick up the right index
-            index = KL if key.startswith('rec') else KLN if key.startswith('neutrino') else KLS
-            if self.index and key.startswith('rec'):
-              index = self.index
-            self[key] = DFProxy(columns=index)
+            self.set_proxy_for_key(key)
         # assume key is a filtered index range after a cut
         if type(key) is not str:
             self._tables['indices'] = key
@@ -98,6 +94,13 @@ class Loader():
         else:
             dfslice = self._tables[key].loc[self._tables[key].index.intersection(self._tables['indices'])]
             return dfslice
+
+    def set_proxy_for_key(self, key):
+        # Pick up the right index
+        index = KL if key.startswith('rec') else KLN if key.startswith('neutrino') else KLS
+        if self.index and key.startswith('rec'):
+            index = self.index
+        self[key] = DFProxy(columns=index)
 
     def setupGo(self):
         """

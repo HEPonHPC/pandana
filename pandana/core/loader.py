@@ -76,6 +76,7 @@ class Loader():
 
     def __getitem__(self, key):
         # actually build the cache before Go()
+        # TODO: Clarify this: is the behavior of __getitem__ different before Go() is called and after it is called?
         if type(key) == str and not key in self._tables:
             # Pick up the right index
             index = KL if key.startswith('rec') else KLN if key.startswith('neutrino') else KLS
@@ -112,8 +113,6 @@ class Loader():
         return self._filegen()
 
     def calculateEventRange(self, group, rank, nranks):
-        # TODO: When refactoring, note that this method makes no use of 'self'. It should become a free
-        # function in the right place.
         begin, end = utils.mpiutils.calculate_slice_for_rank(rank, nranks, group[self.idcol].size)
         span = group[self.idcol][begin : end].flatten()
         b, e = span[0], span[-1]
@@ -128,8 +127,11 @@ class Loader():
         comm = MPI.COMM_WORLD
         begin_evt, end_evt = self.calculateEventRange(aFile.get('spill'), comm.rank, comm.size)
         for tablename in self._tables:
+            # TODO: It seems like self._tables['indices'] is sufficiently different from all other
+            # values stored that it should be a member of Loader directly.
             if tablename == 'indices':
                 continue
+            # TODO: Loader should not need to access a protected member of DFProxy.
             new_df = createDataFrameFromFile(aFile, tablename, self._tables[tablename]._proxycols, begin_evt, end_evt, self.idcol)
             self.dflist[tablename].append(new_df)
 

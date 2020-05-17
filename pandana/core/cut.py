@@ -5,8 +5,9 @@ import pandas as pd
 
 
 class Cut():
-    """Represents a selection criterion to be applied to a dataframe.
+    # TODO: Cut makes use of protected data from Loader; this should be removed.
 
+    """Represents a selection criterion to be applied to a dataframe.
 
     """
     def __init__(self, cut, invert=False):
@@ -66,7 +67,7 @@ class Cut():
         if len(self._cut) > self.filteridx and canfiltermore:
             return self(tables[cutidx])
         # use filtered index list for evaluation of the var that comes later
-        tables._tables['indices'] = cutidx
+        tables._indices = cutidx
         self.filteridx = 0
         self.reset_cutindices()
         return applycut
@@ -79,9 +80,9 @@ class Cut():
 
     def __or__(self, other):
         def orcut(tables):
-            idx = tables._tables['indices']
+            idx = tables._indices
             df1 = self(tables)
-            tables._tables['indices'] = idx
+            tables._indices = idx
             df2 = other(tables)
             # or operators are not commutative???
             compare = pd.concat([df1, df2], axis=1, join='outer').fillna(False)

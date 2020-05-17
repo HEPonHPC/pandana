@@ -39,7 +39,8 @@ class Loader():
         self._files = SourceWrapper(filesource, stride, offset, limit)
         # _tables stores the entire dataset read from file
         # index key holds the global index range to be accessed from the dataset by a cut/var
-        self._tables = {'indices': None}
+        self._tables = {}
+        self._indices = None
         self.gone = False
         self.histdefs = []
         self.cutdefs = []
@@ -64,7 +65,7 @@ class Loader():
 
     def reset_index(self):
         # reset after each Spectrum fill
-        self._tables['indices'] = None
+        self._indices = None
 
     def __setitem__(self, key, df):
         # set multiindex for recTree data
@@ -75,16 +76,20 @@ class Loader():
         self._tables[key] = df
 
     def __getitem__(self, key):
+        # TODO: What can __getitem__ return?
+        #    if key is not a string, it *sets* a value and returns self.
+        #    it can return an entry from self._tables
+        #    it can return a slice of an etry from self._tables
         # actually build the cache before Go()
         # TODO: Clarify this: is the behavior of __getitem__ different before Go() is called and after it is called?
         if type(key) == str and not key in self._tables:
             self.set_proxy_for_key(key)
         # assume key is a filtered index range after a cut
         if type(key) is not str:
-            self._tables['indices'] = key
+            self._indices = key
             return self
         # no filtering
-        if self._tables['indices'] is None:
+        if self._indices is None:
             return self._tables[key]
         # use global index to slice dataframe requested
         elif self._tables[key].dropna().empty:
@@ -92,7 +97,7 @@ class Loader():
             print("Warning! No data read for %s" % key)
             return self._tables[key]
         else:
-            dfslice = self._tables[key].loc[self._tables[key].index.intersection(self._tables['indices'])]
+            dfslice = self._tables[key].loc[self._tables[key].index.intersection(self._indices)]
             return dfslice
 
     def set_proxy_for_key(self, key):
@@ -130,10 +135,6 @@ class Loader():
         comm = MPI.COMM_WORLD
         begin_evt, end_evt = self.calculateEventRange(aFile.get('spill'), comm.rank, comm.size)
         for tablename in self._tables:
-            # TODO: It seems like self._tables['indices'] is sufficiently different from all other
-            # values stored that it should be a member of Loader directly.
-            if tablename == 'indices':
-                continue
             # TODO: Loader should not need to access a protected member of DFProxy.
             new_df = createDataFrameFromFile(aFile, tablename, self._tables[tablename]._proxycols, begin_evt, end_evt, self.idcol)
             self.dflist[tablename].append(new_df)
@@ -177,7 +178,7 @@ class Loader():
 
     def cleanup(self):
         # free up some memory
-        self._tables = {'indices':0}
+        self._indices = None
         # remove associations with spectra
         self.histdefs = []
 

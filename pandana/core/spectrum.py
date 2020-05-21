@@ -1,5 +1,6 @@
 """This module provides the classes Spectrum and FilledSpectrum.
 """
+import h5py
 import pandas as pd
 import numpy as np
 

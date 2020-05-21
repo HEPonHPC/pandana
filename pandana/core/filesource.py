@@ -40,6 +40,15 @@ class GlobSource():
   def nFiles(self):
     return len(self.files)
 
+
+class SAMQuerySource(object):
+  pass
+
+
+class SAMProjectSource(object):
+  pass
+
+
 class SourceWrapper():
   def __init__(self, query, stride=1, offset = 0, limit = None):
     self.query = query

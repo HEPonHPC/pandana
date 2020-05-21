@@ -15,6 +15,10 @@ class Cut():
             cut = [cut]
         if not isinstance(invert, list):
             invert = [invert]
+        # TODO: rather than maintaining separate lists, consider
+        # a data structure that unites the bool and the Cut, so
+        # that they can't get out-of-sync, and avoiding the need for
+        # a zip() to combine them in __call__.
         assert len(cut) == len(invert), "invalid cut definition!"
 
         self._cut = list(cut)

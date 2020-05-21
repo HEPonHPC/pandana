@@ -19,10 +19,12 @@ class DFProxy(pd.DataFrame):
         self._proxycols = list(self.columns.values)
 
     def __getitem__(self, key):
+        # TODO: What are all the legal types that can be used as 'key'?
         # add the column
         if type(key) is str and not key in self._proxycols:
             self._proxycols.append(key)
             self.__setitem__(key, np.nan)
+            # TODO: Evaluate replacing recursive all with direct call to pd.DataFrame.__getitem__(self, key)
             return self.__getitem__(key)
         # or all the columns
         if type(key) is list and not set(key) <= set(self._proxycols):

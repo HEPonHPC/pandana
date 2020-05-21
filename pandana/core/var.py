@@ -1,6 +1,6 @@
 """This module provides the class Var."""
 
-from pandana import Cut
+from pandana.core.cut import Cut
 
 class Var():
     """Represents a variable.

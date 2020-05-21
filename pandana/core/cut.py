@@ -37,8 +37,15 @@ class Cut():
         # tables is empty anyway. takes negligible time
         if not tables.gone:
             cutlist = [(~c(tables) if b else c(tables)) for c, b in zip(self._cut, self._invert)]
-            #return dummy cut series
-            return cutlist[0]
+            if not tables.interactive:
+                # tables is empty anyway. takes negligible time 
+                #return dummy cut series
+                return cutlist[0]
+            else:
+                cut_df = pd.concat(cutlist, axis=1).all(axis=1)
+                cutidx = cut_df.index[np.where(cut_df)]
+                tables._indices = cutidx
+                return cut_df
 
         # cutid holds the filtered index list after applying the cut on the entire dataset
         cutidx = self._cutid[self.filteridx]

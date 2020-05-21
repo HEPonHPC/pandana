@@ -4,6 +4,7 @@ from pandana.core.indices import KL
 from pandana.core.var import Var
 from pandana.utils import *
 
+from nova.utils.misc import *
 from nova.var.numuE_utils import *
 
 # cvnProd3Train is messed up in the current iteration of files.
@@ -157,13 +158,13 @@ def kCosNumi(tables):
     KalDir = df[['dir.x','dir.y', 'dir.z']]
 
     # Use separate beam dir for each detector
-    KalDirFD = KalDir[kDetID(tables)==detector.kFD]
-    KalDirND = KalDir[kDetID(tables)==detector.kND]
-
-    CosFD = KalDirFD.mul(BeamDirFD, axis=1).sum(axis=1)
-    CosND = KalDirND.mul(BeamDirND, axis=1).sum(axis=1)
-
-    return pd.concat([CosFD, CosND])
+    det = kDetID(tables)
+    if (det == detector.kFD).agg(np.all) and not det.empty:
+        CosFD = KalDir.mul(BeamDirFD, axis=1).sum(axis=1)
+        return CosFD
+    if (det == detector.kND).agg(np.all) and not det.empty:
+        CosND = KalDir.mul(BeamDirND, axis=1).sum(axis=1)
+        return CosND
 kCosNumi = Var(kCosNumi)
 
 def kNumuMuE(tables):

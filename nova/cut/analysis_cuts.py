@@ -3,6 +3,7 @@ import numpy as np
 
 from pandana.core import Cut
 from pandana.core.indices import KL
+from nova.utils.misc import *
 from nova.utils.enums import *
 from nova.var.analysis_vars import *
 
@@ -218,7 +219,7 @@ kNumuNoPIDFD = kNumuQuality & kNumuContainFD
 def kNumuContainND(tables):
     # check is a pandas.core.series.Series.
     # it will have a MultiIndex with names 'run', 'subrun', 'cycle', 'evt' and 'subevt'.
-    check = tables['rec.vtx.elastic']['rec.vtx.elastic_idx'] == 0
+    check = tables['rec.vtx.elastic.fuzzyk.png']['rec.vtx.elastic_idx'] == 0
 
     shw_df = tables['rec.vtx.elastic.fuzzyk.png.shwlid'][check]
     shw_df_trans = shw_df[['start.y','stop.y', 'start.x', 'stop.x']]

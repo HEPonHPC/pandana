@@ -11,12 +11,18 @@ from pandana import utils
 
 class InteractiveLoader():
     def __init__(self, files):
+        if type(files) is not list:
+            files = [files]
         self._files = files
         self._tables = {}
+        self.gone = False
+        self.interactive = True
+        self._indices = None
 
     def keys(self, contain=None):
         f = self._files[0]
         h5 = h5py.File(f, 'r')
+        keys = list(h5.keys())
         for k in list(h5.keys()):
             if contain:
                 if contain in k:
@@ -24,6 +30,8 @@ class InteractiveLoader():
             else:
                 print(k)
         h5.close()
+        
+        return keys
 
     def __getitem__(self, key):
         if not key in self._tables:
@@ -33,7 +41,7 @@ class InteractiveLoader():
                 group = f.get(key)
                 values = {}
                 for k in list(group.keys()):
-                    dataset = group.get(k).value
+                    dataset = group.get(k)[()]
                     if dataset.shape[1] == 1:
                         dataset = dataset.flatten()
                     else:

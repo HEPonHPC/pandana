@@ -37,6 +37,7 @@ class Loader():
     def __init__(self, filesource, idcol, stride = 1, offset = 0, limit = None, index=None):
         self.idcol = idcol
         self._files = SourceWrapper(filesource, stride, offset, limit)
+        self.interactive = False
         # _tables stores the entire dataset read from file
         # index key holds the global index range to be accessed from the dataset by a cut/var
         self._tables = {}

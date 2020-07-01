@@ -8,6 +8,7 @@ logger.info('kind id name event timestamp')
 
 from time import time as now
 import h5py
+import numpy as np
 
 class MonkeyPatchedFile(h5py._hl.files.File):
     orig_init = h5py._hl.files.File.__init__
@@ -56,7 +57,8 @@ def main(input_files, idcol, max_files):
     #print('my_spectrum internal dataframe: ')
     #print((my_spectrum.df().head()))
 
-    n, _ = my_spectrum.histogram(bins=50, range=(1, 4))
+    nbins = 50
+    n, _ = my_spectrum.histogram(bins=nbins, range=(1, 4))
     total_n = MPI.COMM_WORLD.reduce(n, op=MPI.SUM, root = 0)
     total_pot = MPI.COMM_WORLD.reduce(my_spectrum.POT(), op=MPI.SUM, root = 0)
     if MPI.COMM_WORLD.rank == 0:

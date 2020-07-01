@@ -95,8 +95,10 @@ class Loader():
         # use global index to slice dataframe requested
         elif self._tables[key].dropna().empty:
             # sometimes there's no data available in the file, allow it but warn
-            print("Warning! No data read for %s" % key)
-            return self._tables[key]
+            # Avoid printing messages in MPI programs.
+            if MPI.COMM_WORLD.size == 1:
+                print("Warning! No data read for %s" % key)
+            return self._tables[key].dropna()
         else:
             dfslice = self._tables[key].loc[self._tables[key].index.intersection(self._indices)]
             return dfslice

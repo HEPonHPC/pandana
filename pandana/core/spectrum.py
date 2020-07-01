@@ -74,8 +74,10 @@ class Spectrum():
     def weight(self):
         return self._weight
 
-    def histogram(self, bins=None, range=None, POT=None):
-        if not POT: POT = self._POT
+    def histogram(self, bins=10, range=None, POT=None):
+        if POT is None: POT = self._POT
+        if POT == 0.0:
+            return np.zeros(bins), bins
         n, bins = np.histogram(self._df, bins, range, weights = self._weight)
         return n*POT/self._POT, bins
 

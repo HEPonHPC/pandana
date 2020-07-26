@@ -2,6 +2,7 @@
 
 from pandana.core.cut import Cut
 
+
 class Var():
     """Represents a variable.
 
@@ -9,6 +10,7 @@ class Var():
     of calulcated from one or more things that wereread,
     or calculated from other Vars.
     """
+
     def __init__(self, var):
         self._var = var
 
@@ -40,7 +42,7 @@ class Var():
         return Var(lambda tables: self(tables) - other(tables))
 
     def __mult__(self, other):
-        return Var(lambda tables: self(tables)*other(tables))
+        return Var(lambda tables: self(tables) * other(tables))
 
     def __truediv__(self, other):
-        return Var(lambda tables: self(tables)/other(tables))
+        return Var(lambda tables: self(tables) / other(tables))

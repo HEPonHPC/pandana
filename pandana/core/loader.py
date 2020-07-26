@@ -23,18 +23,20 @@ def readDatasetFromGroup(group, datasetname, begin, end):
         dataset = list(dataset)  # Can this ever be called? What would the global result be?
     return dataset
 
+
 def createDataFrameFromFile(current_file, tablename, proxycols, begin_evt, end_evt, idcol):
     # branches from cache
     group = current_file.get(tablename)
     event_seq_numbers = group[idcol][()].flatten()
-    begin_row, end_row = event_seq_numbers.searchsorted([begin_evt, end_evt+1])
+    begin_row, end_row = event_seq_numbers.searchsorted([begin_evt, end_evt + 1])
     # leaves from cache
     values = {k: readDatasetFromGroup(group, k, begin_row, end_row) for k in proxycols}
     return pd.DataFrame(values)
 
+
 class Loader():
 
-    def __init__(self, filesource, idcol, stride = 1, offset = 0, limit = None, index=None):
+    def __init__(self, filesource, idcol, stride=1, offset=0, limit=None, index=None):
         self.idcol = idcol
         self._files = SourceWrapper(filesource, stride, offset, limit)
         self.interactive = False
@@ -45,7 +47,7 @@ class Loader():
         self.gone = False
         self.histdefs = []
         self.cutdefs = []
-        self.index=index
+        self.index = index
         self.dflist = collections.defaultdict(list)
         # add an extra var from spilltree to keep track of exposure
         self.sum_POT()
@@ -72,7 +74,7 @@ class Loader():
         # set multiindex for recTree data
         index = KL if key.startswith('rec') else KLN if key.startswith('neutrino') else KLS
         if self.index and key.startswith('rec'):
-          index = self.index
+            index = self.index
         df.set_index(index, inplace=True)
         self._tables[key] = df
 
@@ -125,7 +127,7 @@ class Loader():
 
     def calculateEventRange(self, group, rank, nranks):
         begin, end = utils.mpiutils.calculate_slice_for_rank(rank, nranks, group[self.idcol].size)
-        span = group[self.idcol][begin : end].flatten()
+        span = group[self.idcol][begin: end].flatten()
         b, e = span[0], span[-1]
         return b, e
 
@@ -139,15 +141,16 @@ class Loader():
         begin_evt, end_evt = self.calculateEventRange(aFile.get('spill'), comm.rank, comm.size)
         for tablename in self._tables:
             # TODO: Loader should not need to access a protected member of DFProxy.
-            new_df = createDataFrameFromFile(aFile, tablename, self._tables[tablename]._proxycols, begin_evt, end_evt, self.idcol)
+            new_df = createDataFrameFromFile(aFile, tablename, self._tables[tablename]._proxycols, begin_evt, end_evt,
+                                             self.idcol)
             self.dflist[tablename].append(new_df)
 
     def fillSpectra(self):
         for key in self.dflist:
             # set index for all dataframes
-            assert(isinstance(self[key], DFProxy))
+            assert (isinstance(self[key], DFProxy))
             self[key] = pd.concat(self.dflist[key])
-            assert(isinstance(self[key], pd.DataFrame))
+            assert (isinstance(self[key], pd.DataFrame))
         self.dflist = {}
         # Compute POT and then fill spectra
         self.sum_POT()
@@ -167,13 +170,13 @@ class Loader():
         self.setupGo()
         file_idx = 0
         while True:
-          try:
-            fname = self.getFile()
-            with h5py.File(fname, 'r') as current_file:
-                self.createDataFrames(current_file)
-            file_idx += 1
-          except StopIteration:
-            break
+            try:
+                fname = self.getFile()
+                with h5py.File(fname, 'r') as current_file:
+                    self.createDataFrames(current_file)
+                file_idx += 1
+            except StopIteration:
+                break
 
         self.fillSpectra()
         # cleanup
@@ -184,5 +187,3 @@ class Loader():
         self._indices = None
         # remove associations with spectra
         self.histdefs = []
-
-

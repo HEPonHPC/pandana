@@ -30,4 +30,3 @@ class TestCalculateSliceForRank(unittest.TestCase):
         for myrank in range(0, 100):
             start, stop = calculate_slice_for_rank(myrank, 100, 100)
             self.assertEqual(stop - start, 1)
-

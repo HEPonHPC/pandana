@@ -10,7 +10,7 @@ import pandas as pd
 
 class TestLoader(TestCase):
     def setUp(self):
-        self.loader = Loader(None, idcol = 'evtseq')
+        self.loader = Loader(None, idcol='evtseq')
         self.file = h5.File('fake', 'w', driver='core', backing_store=False)
         self.nranks = 3
         self.run_id = 12
@@ -71,7 +71,7 @@ class TestLoader(TestCase):
             [item for sublist in subevt_column for item in sublist]), dtype=u4, shape=shape)
         self.rec_energy_numu_group.create_dataset('evtseq', data=np.array(
             [self.event_id_to_evtseq[event_id] for event_id in self.rec_energy_numu_group['evt'][:].flatten()]),
-            dtype=u8, shape=shape)
+                                                  dtype=u8, shape=shape)
         self.assertEqual(self.rec_energy_numu_group['evt'].size, self.rec_energy_numu_group['subevt'].size)
         self.assertTrue(
             np.all(self.rec_energy_numu_group['evt'][()].flatten() == np.array([1, 1, 1, 1, 1, 4, 4, 4, 6, 6, 6, 11])))
@@ -130,7 +130,8 @@ class TestLoader(TestCase):
         for rank in range(self.nranks):
             b, e = self.loader.calculateEventRange(self.spill_group, rank, self.nranks)
             dflist.append(pandana.core.loader.createDataFrameFromFile(self.file, 'spill',
-                                                                      self.loader._tables['spill']._proxycols, b, e, 'evtseq'))
+                                                                      self.loader._tables['spill']._proxycols, b, e,
+                                                                      'evtseq'))
         all(self.assertIsInstance(df, pd.DataFrame) for df in dflist)
         num_rows_in_dataframes = [len(df.index) for df in dflist]
         print("createSpillDataFrame")
@@ -150,7 +151,8 @@ class TestLoader(TestCase):
         for rank in range(self.nranks):
             b, e = self.loader.calculateEventRange(self.spill_group, rank, self.nranks)
             dflist.append(pandana.core.loader.createDataFrameFromFile(self.file, 'rec.energy.numu',
-                                                                      ['run', 'subrun', 'evt', 'subevt', 'evtseq', 'trkccE'],
+                                                                      ['run', 'subrun', 'evt', 'subevt', 'evtseq',
+                                                                       'trkccE'],
                                                                       b, e, 'evtseq'))
         all(self.assertIsInstance(df, pd.DataFrame) for df in dflist)
         num_rows_in_dataframes = [len(df.index) for df in dflist]

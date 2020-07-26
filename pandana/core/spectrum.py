@@ -4,9 +4,11 @@ import h5py
 import pandas as pd
 import numpy as np
 
+
 class Spectrum():
     """Represents a histogram of some quantity.
     """
+
     def __init__(self, tables, cut, var, weight=None, name=None):
         """Initialize a Spectrum, registering it with the given Loader.
 
@@ -79,8 +81,8 @@ class Spectrum():
         if POT is None: POT = self._POT
         if POT == 0.0:
             return np.zeros(bins), bins
-        n, bins = np.histogram(self._df, bins, range, weights = self._weight)
-        return n*POT/self._POT, bins
+        n, bins = np.histogram(self._df, bins, range, weights=self._weight)
+        return n * POT / self._POT, bins
 
     def entries(self):
         return self._df.shape[0]
@@ -88,7 +90,7 @@ class Spectrum():
     def integral(self, POT=None):
         if not POT:
             POT = self._POT
-        return self._weight.sum()*POT/self._POT
+        return self._weight.sum() * POT / self._POT
 
     def to_text(self, file_name, sep=' ', header=False):
         self._df.to_csv(file_name, sep=sep, index=True, header=header)
@@ -97,6 +99,7 @@ class Spectrum():
         df = pd.concat([self._df, b._df])
         pot = self._POT + b._POT
         return FilledSpectrum(df, pot)
+
 
 # For constructing spectra without having to fill
 class FilledSpectrum(Spectrum):
@@ -108,35 +111,37 @@ class FilledSpectrum(Spectrum):
         self._df = df
         self._POT = pot
 
-        if weight is not None: 
+        if weight is not None:
             self._weight = weight
         else:
             self._weight = pd.Series(1, self._df.index, name='weight')
-        
+
     def fill(self):
         print('This spectrum was constructed already filled.')
+
 
 # Save spectra to an hdf5 file. Takes a single or a list of spectra
 def save_spectra(fname, spectra, groups):
     if not type(spectra) is list: spectra = [spectra]
-    if not type(groups) is list : groups = [groups]
-    assert len(spectra)==len(groups), 'Each spectrum must have a group name.'
+    if not type(groups) is list: groups = [groups]
+    assert len(spectra) == len(groups), 'Each spectrum must have a group name.'
 
     # idk why we are giving things to the store
     store = pd.HDFStore(fname, 'w')
-    
+
     for spectrum, group in zip(spectra, groups):
-        store[group+'/dataframe'] = spectrum.df()
-        store.get_storer(group+'/dataframe').attrs.pot = spectrum.POT()
-        store[group+'/weights']   = spectrum.weight()
+        store[group + '/dataframe'] = spectrum.df()
+        store.get_storer(group + '/dataframe').attrs.pot = spectrum.POT()
+        store[group + '/weights'] = spectrum.weight()
 
     store.close()
+
 
 # alternate save data function that doesn't utilise pytables
 def save_tree(fname, spectra, groups, attrs=True):
     if not type(spectra) is list: spectra = [spectra]
-    if not type(groups) is list : groups = [groups]
-    assert len(spectra)==len(groups), 'Each spectrum must have a group name.'
+    if not type(groups) is list: groups = [groups]
+    assert len(spectra) == len(groups), 'Each spectrum must have a group name.'
 
     f = h5py.File(fname, 'w')
     for spectrum, group in zip(spectra, groups):
@@ -147,7 +152,7 @@ def save_tree(fname, spectra, groups, attrs=True):
         if ismap:
             for i in range(len(vals)):
                 vals[i] = vals[i].reshape(1, vals[i].shape[0])
-            vals = np.stack(np.concatenate(vals), axis = 0)
+            vals = np.stack(np.concatenate(vals), axis=0)
 
         g.create_dataset('df', data=vals)
         if attrs:
@@ -166,15 +171,15 @@ def load_spectra(fname, groups):
     """
     if not isinstance(groups, list):
         groups = [groups]
-    
+
     # ah that's more like it
     store = pd.HDFStore(fname, 'r')
 
     ret = []
     for group in groups:
-        df = store[group+'/dataframe']
-        pot = store.get_storer(group+'/dataframe').attrs.pot
-        weight = store[group+'/weights']
+        df = store[group + '/dataframe']
+        pot = store.get_storer(group + '/dataframe').attrs.pot
+        weight = store[group + '/weights']
 
         ret.append(FilledSpectrum(df, pot, weight=weight))
 

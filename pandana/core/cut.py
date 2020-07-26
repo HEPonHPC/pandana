@@ -1,5 +1,5 @@
-'''This module defines the class Cut.
-'''
+"""This module defines the class Cut.
+"""
 import numpy as np
 import pandas as pd
 
@@ -10,6 +10,7 @@ class Cut():
     """Represents a selection criterion to be applied to a dataframe.
 
     """
+
     def __init__(self, cut, invert=False):
         if not isinstance(cut, list):
             cut = [cut]
@@ -28,14 +29,14 @@ class Cut():
         self.filteridx = 0
 
         # use these to keep track of cuts already computed
-        self._filter = [0]*len(self._cut)
-        self._cutid = [0]*len(self._cut)
+        self._filter = [0] * len(self._cut)
+        self._cutid = [0] * len(self._cut)
 
     def reset_cutindices(self):
         """Set _filter and _cutid to original state."""
         # need to reset after use by Loader
-        self._filter = [0]*len(self._cut)
-        self._cutid = [0]*len(self._cut)
+        self._filter = [0] * len(self._cut)
+        self._cutid = [0] * len(self._cut)
 
     def __call__(self, tables):
         # tables is empty anyway. takes negligible time
@@ -43,7 +44,7 @@ class Cut():
             cutlist = [(~c(tables) if b else c(tables)) for c, b in zip(self._cut, self._invert)]
             if not tables.interactive:
                 # tables is empty anyway. takes negligible time 
-                #return dummy cut series
+                # return dummy cut series
                 return cutlist[0]
             else:
                 cut_df = pd.concat(cutlist, axis=1).all(axis=1)
@@ -98,4 +99,5 @@ class Cut():
             # or operators are not commutative???
             compare = pd.concat([df1, df2], axis=1, join='outer').fillna(False)
             return compare.any(axis=1)
+
         return Cut(orcut)

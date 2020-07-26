@@ -16,6 +16,7 @@ def eid(run, subrun, evt):
     """
     return (run << 30) + (subrun << 20) + evt
 
+
 @numba.jit(nopython=True)
 def make_evtseq_map(eids):
     """Return a numba.typed.Dict that maps the eid values to evtseq values.

@@ -3,10 +3,10 @@ import pandas as pd
 import warnings
 
 with warnings.catch_warnings():
-  warnings.filterwarnings("ignore", category=FutureWarning)
-  import h5py
+    warnings.filterwarnings("ignore", category=FutureWarning)
+    import h5py
 
-import os 
+import os
 import sys
 
 from pandana.core import *

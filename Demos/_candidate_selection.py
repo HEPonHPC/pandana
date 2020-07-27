@@ -37,7 +37,11 @@ h5py.File = MonkeyPatchedFile
 class MonkeyPatchedDataset(h5py.Dataset):
     orig_getitem = h5py._hl.dataset.Dataset.__getitem__
     def __getitem__(self, *args):
-        logger.info(f"{self.name}\t{args}")
+        idx = args[0]
+        if idx == ():
+            logger.info(f"{self.name}\t0\t{self.size}")
+        else:
+            logger.info(f"{self.name}\t{idx.start}\t{idx.stop}")
         #logger.info('dset {0} {1} startread {2}'.format(id(self), self.name, now()))
         res = MonkeyPatchedDataset.orig_getitem(self, *args)
         #logger.info('dset {0} {1} endread {2}'.format(id(self), self.name, now()))

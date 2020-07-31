@@ -15,7 +15,9 @@ def make_evtseq_map(eid):
     :param eid: a numpy.array of uint64 event ids
     :return: a numba.type.Dict
     """
-    result = numba.typed.Dict.empty(key_type=numba.types.uint64, value_type=numba.types.uint64)
+    result = numba.typed.Dict.empty(
+        key_type=numba.types.uint64, value_type=numba.types.uint64
+    )
     for i in range(np.uint64(eid.size)):
         result[eid[i]] = i
     return result

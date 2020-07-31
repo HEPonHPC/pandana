@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 
-class Cut():
+class Cut:
     # TODO: Cut makes use of protected data from Loader; this should be removed.
 
     """Represents a selection criterion to be applied to a dataframe.
@@ -41,9 +41,12 @@ class Cut():
     def __call__(self, tables):
         # tables is empty anyway. takes negligible time
         if not tables.gone:
-            cutlist = [(~c(tables) if b else c(tables)) for c, b in zip(self._cut, self._invert)]
+            cutlist = [
+                (~c(tables) if b else c(tables))
+                for c, b in zip(self._cut, self._invert)
+            ]
             if not tables.interactive:
-                # tables is empty anyway. takes negligible time 
+                # tables is empty anyway. takes negligible time
                 # return dummy cut series
                 return cutlist[0]
             else:
@@ -97,7 +100,7 @@ class Cut():
             tables._indices = idx
             df2 = other(tables)
             # or operators are not commutative???
-            compare = pd.concat([df1, df2], axis=1, join='outer').fillna(False)
+            compare = pd.concat([df1, df2], axis=1, join="outer").fillna(False)
             return compare.any(axis=1)
 
         return Cut(orcut)

@@ -3,7 +3,7 @@
 from pandana.core.cut import Cut
 
 
-class Var():
+class Var:
     """Represents a variable.
 
     A variable may be directly read from a dataframe,

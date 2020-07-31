@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 
-class Spectrum():
+class Spectrum:
     """Represents a histogram of some quantity.
     """
 
@@ -39,7 +39,7 @@ class Spectrum():
         self._df = self._df.dropna()
 
         # initial weights are all 1
-        self._weight = pd.Series(1, self._df.index, name='weight')
+        self._weight = pd.Series(1, self._df.index, name="weight")
         if weight:
             # apply all the weights
             if isinstance(weight, list):
@@ -54,16 +54,25 @@ class Spectrum():
         It is required that Go has been called before fill is called.
         """
         # Loader.Go() has been called
-        self.__init__(self._tables, self._cutfcn, self._varfcn, weight=self._weightfcn, name=self._name)
+        self.__init__(
+            self._tables,
+            self._cutfcn,
+            self._varfcn,
+            weight=self._weightfcn,
+            name=self._name,
+        )
 
         # Just to be sure...
-        assert np.array_equal(self._df.index, self._weight.index), 'var and weights have different rows'
+        assert np.array_equal(
+            self._df.index, self._weight.index
+        ), "var and weights have different rows"
 
         # reset tables global index
         self._tables.reset_index()
 
         # Set dataframe name if desired
-        if self._name: self._df = self._df.rename(self._name)
+        if self._name:
+            self._df = self._df.rename(self._name)
 
         # Grab Spectrum POT from tables
         self._POT = self._tables._POT
@@ -78,7 +87,8 @@ class Spectrum():
         return self._weight
 
     def histogram(self, bins=10, range=None, POT=None):
-        if POT is None: POT = self._POT
+        if POT is None:
+            POT = self._POT
         if POT == 0.0:
             return np.zeros(bins), bins
         n, bins = np.histogram(self._df, bins, range, weights=self._weight)
@@ -92,7 +102,7 @@ class Spectrum():
             POT = self._POT
         return self._weight.sum() * POT / self._POT
 
-    def to_text(self, file_name, sep=' ', header=False):
+    def to_text(self, file_name, sep=" ", header=False):
         self._df.to_csv(file_name, sep=sep, index=True, header=header)
 
     def __add__(self, b):
@@ -104,60 +114,64 @@ class Spectrum():
 # For constructing spectra without having to fill
 class FilledSpectrum(Spectrum):
     def __init__(self, df, pot, weight=None):
-        '''
+        """
         We intentionally do *not* call __init__ on our base class, because Spectrum.__init__ is non-standard; it is
         expected to be called on an already-constructed Spectrum object.
-        '''
+        """
         self._df = df
         self._POT = pot
 
         if weight is not None:
             self._weight = weight
         else:
-            self._weight = pd.Series(1, self._df.index, name='weight')
+            self._weight = pd.Series(1, self._df.index, name="weight")
 
     def fill(self):
-        print('This spectrum was constructed already filled.')
+        print("This spectrum was constructed already filled.")
 
 
 # Save spectra to an hdf5 file. Takes a single or a list of spectra
 def save_spectra(fname, spectra, groups):
-    if not type(spectra) is list: spectra = [spectra]
-    if not type(groups) is list: groups = [groups]
-    assert len(spectra) == len(groups), 'Each spectrum must have a group name.'
+    if not type(spectra) is list:
+        spectra = [spectra]
+    if not type(groups) is list:
+        groups = [groups]
+    assert len(spectra) == len(groups), "Each spectrum must have a group name."
 
     # idk why we are giving things to the store
-    store = pd.HDFStore(fname, 'w')
+    store = pd.HDFStore(fname, "w")
 
     for spectrum, group in zip(spectra, groups):
-        store[group + '/dataframe'] = spectrum.df()
-        store.get_storer(group + '/dataframe').attrs.pot = spectrum.POT()
-        store[group + '/weights'] = spectrum.weight()
+        store[group + "/dataframe"] = spectrum.df()
+        store.get_storer(group + "/dataframe").attrs.pot = spectrum.POT()
+        store[group + "/weights"] = spectrum.weight()
 
     store.close()
 
 
 # alternate save data function that doesn't utilise pytables
 def save_tree(fname, spectra, groups, attrs=True):
-    if not type(spectra) is list: spectra = [spectra]
-    if not type(groups) is list: groups = [groups]
-    assert len(spectra) == len(groups), 'Each spectrum must have a group name.'
+    if not type(spectra) is list:
+        spectra = [spectra]
+    if not type(groups) is list:
+        groups = [groups]
+    assert len(spectra) == len(groups), "Each spectrum must have a group name."
 
-    f = h5py.File(fname, 'w')
+    f = h5py.File(fname, "w")
     for spectrum, group in zip(spectra, groups):
         g = f.create_group(group)
         df = spectrum.df()
         vals = df.values
-        ismap = 'map' in group
+        ismap = "map" in group
         if ismap:
             for i in range(len(vals)):
                 vals[i] = vals[i].reshape(1, vals[i].shape[0])
             vals = np.stack(np.concatenate(vals), axis=0)
 
-        g.create_dataset('df', data=vals)
+        g.create_dataset("df", data=vals)
         if attrs:
-            g.create_dataset('pot', data=spectrum.POT())
-            g.create_dataset('weights', data=spectrum.weight())
+            g.create_dataset("pot", data=spectrum.POT())
+            g.create_dataset("weights", data=spectrum.weight())
         index = df.index.names
         indexdf = df.reset_index()
         for name in index:
@@ -173,13 +187,13 @@ def load_spectra(fname, groups):
         groups = [groups]
 
     # ah that's more like it
-    store = pd.HDFStore(fname, 'r')
+    store = pd.HDFStore(fname, "r")
 
     ret = []
     for group in groups:
-        df = store[group + '/dataframe']
-        pot = store.get_storer(group + '/dataframe').attrs.pot
-        weight = store[group + '/weights']
+        df = store[group + "/dataframe"]
+        pot = store.get_storer(group + "/dataframe").attrs.pot
+        weight = store[group + "/weights"]
 
         ret.append(FilledSpectrum(df, pot, weight=weight))
 

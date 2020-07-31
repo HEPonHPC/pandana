@@ -20,11 +20,15 @@ def readDatasetFromGroup(group, datasetname, begin, end):
     if dataset.shape[1] == 1:
         dataset = dataset.flatten()
     else:
-        dataset = list(dataset)  # Can this ever be called? What would the global result be?
+        dataset = list(
+            dataset
+        )  # Can this ever be called? What would the global result be?
     return dataset
 
 
-def createDataFrameFromFile(current_file, tablename, proxycols, begin_evt, end_evt, idcol):
+def createDataFrameFromFile(
+    current_file, tablename, proxycols, begin_evt, end_evt, idcol
+):
     # branches from cache
     group = current_file.get(tablename)
     event_seq_numbers = group[idcol][()].flatten()
@@ -34,8 +38,7 @@ def createDataFrameFromFile(current_file, tablename, proxycols, begin_evt, end_e
     return pd.DataFrame(values)
 
 
-class Loader():
-
+class Loader:
     def __init__(self, filesource, idcol, stride=1, offset=0, limit=None, index=None):
         self.idcol = idcol
         self._files = SourceWrapper(filesource, stride, offset, limit)
@@ -56,7 +59,7 @@ class Loader():
         return self._files
 
     def sum_POT(self):
-        self._POT = (self['spill']['spillpot']).sum()
+        self._POT = (self["spill"]["spillpot"]).sum()
 
     def add_spectrum(self, spec):
         if not spec in self.histdefs:
@@ -72,8 +75,10 @@ class Loader():
 
     def __setitem__(self, key, df):
         # set multiindex for recTree data
-        index = KL if key.startswith('rec') else KLN if key.startswith('neutrino') else KLS
-        if self.index and key.startswith('rec'):
+        index = (
+            KL if key.startswith("rec") else KLN if key.startswith("neutrino") else KLS
+        )
+        if self.index and key.startswith("rec"):
             index = self.index
         df.set_index(index, inplace=True)
         self._tables[key] = df
@@ -102,13 +107,17 @@ class Loader():
                 print("Warning! No data read for %s" % key)
             return self._tables[key].dropna()
         else:
-            dfslice = self._tables[key].loc[self._tables[key].index.intersection(self._indices)]
+            dfslice = self._tables[key].loc[
+                self._tables[key].index.intersection(self._indices)
+            ]
             return dfslice
 
     def set_proxy_for_key(self, key):
         # Pick up the right index
-        index = KL if key.startswith('rec') else KLN if key.startswith('neutrino') else KLS
-        if self.index and key.startswith('rec'):
+        index = (
+            KL if key.startswith("rec") else KLN if key.startswith("neutrino") else KLS
+        )
+        if self.index and key.startswith("rec"):
             index = self.index
         self[key] = DFProxy(columns=index)
 
@@ -126,31 +135,41 @@ class Loader():
         return self._filegen()
 
     def calculateEventRange(self, group, rank, nranks):
-        begin, end = utils.mpiutils.calculate_slice_for_rank(rank, nranks, group[self.idcol].size)
-        span = group[self.idcol][begin: end].flatten()
+        begin, end = utils.mpiutils.calculate_slice_for_rank(
+            rank, nranks, group[self.idcol].size
+        )
+        span = group[self.idcol][begin:end].flatten()
         b, e = span[0], span[-1]
         return b, e
 
     def createDataFrames(self, aFile):
-        '''
+        """
         Create the DataFrames corresponding to aFile, which must be open.
         This populates self.dflist.
         :return: None
-        '''
+        """
         comm = MPI.COMM_WORLD
-        begin_evt, end_evt = self.calculateEventRange(aFile.get('spill'), comm.rank, comm.size)
+        begin_evt, end_evt = self.calculateEventRange(
+            aFile.get("spill"), comm.rank, comm.size
+        )
         for tablename in self._tables:
             # TODO: Loader should not need to access a protected member of DFProxy.
-            new_df = createDataFrameFromFile(aFile, tablename, self._tables[tablename]._proxycols, begin_evt, end_evt,
-                                             self.idcol)
+            new_df = createDataFrameFromFile(
+                aFile,
+                tablename,
+                self._tables[tablename]._proxycols,
+                begin_evt,
+                end_evt,
+                self.idcol,
+            )
             self.dflist[tablename].append(new_df)
 
     def fillSpectra(self):
         for key in self.dflist:
             # set index for all dataframes
-            assert (isinstance(self[key], DFProxy))
+            assert isinstance(self[key], DFProxy)
             self[key] = pd.concat(self.dflist[key])
-            assert (isinstance(self[key], pd.DataFrame))
+            assert isinstance(self[key], pd.DataFrame)
         self.dflist = {}
         # Compute POT and then fill spectra
         self.sum_POT()
@@ -159,10 +178,10 @@ class Loader():
             spec.fill()
 
     def Go(self):
-        '''
+        """
         Iterate through all associated files, reading all required data. When done, fill all specified spectra.
         :return: None
-        '''
+        """
         # TODO: Consider accumulating the results into spectra file-by-file, rather than reading all files before
         # filling any spectra.
         t0 = time.time()
@@ -172,7 +191,7 @@ class Loader():
         while True:
             try:
                 fname = self.getFile()
-                with h5py.File(fname, 'r') as current_file:
+                with h5py.File(fname, "r") as current_file:
                     self.createDataFrames(current_file)
                 file_idx += 1
             except StopIteration:

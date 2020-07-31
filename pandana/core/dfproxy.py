@@ -3,7 +3,7 @@ import pandas as pd
 
 
 class DFProxy(pd.DataFrame):
-    _internal_names = pd.DataFrame._internal_names + ['_proxycols']
+    _internal_names = pd.DataFrame._internal_names + ["_proxycols"]
     _internal_names_set = set(_internal_names)
 
     @property

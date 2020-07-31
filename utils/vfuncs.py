@@ -5,7 +5,7 @@ import numba
 import numpy as np
 
 
-@numba.vectorize(['uint64(uint32,uint32,uint32)'])
+@numba.vectorize(["uint64(uint32,uint32,uint32)"])
 def eid(run, subrun, evt):
     """Calculate a single-number event id from run/subrun/event.
 
@@ -26,7 +26,9 @@ def make_evtseq_map(eids):
     :param eid: a numpy.array of uint64 event ids
     :return: a numba.type.Dict, which maps an eid to a uint64 evtseq.
     """
-    result = numba.typed.Dict.empty(key_type=numba.types.uint64, value_type=numba.types.uint64)
+    result = numba.typed.Dict.empty(
+        key_type=numba.types.uint64, value_type=numba.types.uint64
+    )
     for i in range(np.uint64(eids.size)):
         result[eids[i]] = i
     return result

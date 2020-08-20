@@ -65,8 +65,8 @@ from nova.cut.analysis_cuts import kNumuCutND
 from mpi4py import MPI
 
 
-def main(input_files, idcol, max_files):
-    tables = Loader(input_files, idcol, limit=max_files)
+def main(input_files, idcol):
+    tables = Loader(input_files, idcol)
     energy = Var(lambda tables: tables["rec.slc"]["calE"])
     my_spectrum = Spectrum(tables, kNumuCutND, energy)
     tables.Go()

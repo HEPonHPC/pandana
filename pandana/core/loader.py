@@ -7,6 +7,7 @@ from mpi4py import MPI
 from pandana.core import SourceWrapper, DFProxy
 from pandana.core.indices import KL, KLN, KLS
 from pandana import utils
+from time import time as now
 
 
 def readDatasetFromGroup(group, datasetname, begin, end):
@@ -39,7 +40,7 @@ def createDataFrameFromFile(
 
 
 class Loader:
-    def __init__(self, filesource, idcol, stride=1, offset=0, limit=None, index=None):
+    def __init__(self, filesource, idcol, stride=1, offset=0, limit=None, index=None, logger=None):
         self.idcol = idcol
         self._files = SourceWrapper(filesource, stride, offset, limit)
         self.interactive = False
@@ -51,6 +52,7 @@ class Loader:
         self.histdefs = []
         self.cutdefs = []
         self.index = index
+        self.logger = logger
         self.dflist = collections.defaultdict(list)
         # add an extra var from spilltree to keep track of exposure
         self.sum_POT()
@@ -187,6 +189,8 @@ class Loader:
         t0 = time.time()
 
         self.setupGo()
+        if self.logger is not None:
+            self.logger.info(f"main 0 NA aftersetupGo {now()}")
         file_idx = 0
         while True:
             try:
@@ -196,10 +200,16 @@ class Loader:
                 file_idx += 1
             except StopIteration:
                 break
-
+        
+        if self.logger is not None:
+            self.logger.info(f"main 0 NA beforefillSpectra {now()}")
         self.fillSpectra()
+        if self.logger is not None:
+            self.logger.info(f"main 0 NA afterfillSpectra {now()}")
         # cleanup
         self.cleanup()
+        if self.logger is not None:
+            self.logger.info(f"main 0 NA aftercleanup {now()}")
 
     def cleanup(self):
         # free up some memory

@@ -6,8 +6,7 @@ import numpy as np
 
 
 class Spectrum:
-    """Represents a histogram of some quantity.
-    """
+    """Represents a histogram of some quantity."""
 
     def __init__(self, tables, cut, var, weight=None, name=None):
         """Initialize a Spectrum, registering it with the given Loader.
@@ -181,8 +180,7 @@ def save_tree(fname, spectra, groups, attrs=True):
 
 
 def load_spectra(fname, groups):
-    """Load a spectrum from a file.
-    """
+    """Load a spectrum from a file."""
     if not isinstance(groups, list):
         groups = [groups]
 

@@ -8,8 +8,7 @@ class DFProxy(pd.DataFrame):
 
     @property
     def _constructor(self):
-        """_constructor property is required by Pandas for subclasss of pd.DataFrame.
-        """
+        """_constructor property is required by Pandas for subclasss of pd.DataFrame."""
         return DFProxy
 
     def __init__(self, data=None, **kwargs):

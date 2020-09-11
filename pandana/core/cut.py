@@ -7,9 +7,7 @@ import pandas as pd
 class Cut:
     # TODO: Cut makes use of protected data from Loader; this should be removed.
 
-    """Represents a selection criterion to be applied to a dataframe.
-
-    """
+    """Represents a selection criterion to be applied to a dataframe."""
 
     def __init__(self, cut, invert=False):
         if not isinstance(cut, list):

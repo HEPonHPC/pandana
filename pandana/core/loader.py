@@ -40,7 +40,9 @@ def createDataFrameFromFile(
 
 
 class Loader:
-    def __init__(self, filesource, idcol, stride=1, offset=0, limit=None, index=None, logger=None):
+    def __init__(
+        self, filesource, idcol, stride=1, offset=0, limit=None, index=None, logger=None
+    ):
         self.idcol = idcol
         self._files = SourceWrapper(filesource, stride, offset, limit)
         self.interactive = False
@@ -200,7 +202,7 @@ class Loader:
                 file_idx += 1
             except StopIteration:
                 break
-        
+
         if self.logger is not None:
             self.logger.info(f"main 0 NA beforefillSpectra {now()}")
         self.fillSpectra()

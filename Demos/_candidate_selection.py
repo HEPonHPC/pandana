@@ -69,7 +69,7 @@ from mpi4py import MPI
 
 def main(input_files, idcol):
     logger.info(f'main 0 NA start {now()}')
-    tables = Loader(input_files, idcol, logger=logger)
+    tables = Loader(input_files, idcol, "spill", logger=logger)
     logger.info(f'main 0 NA afterLoader {now()}')
     energy = Var(lambda tables: tables["rec.slc"]["calE"])
     logger.info(f'main 0 NA afterVar {now()}')

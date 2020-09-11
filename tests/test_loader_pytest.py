@@ -10,7 +10,7 @@ import pandas as pd
 
 class TestLoader(TestCase):
     def setUp(self):
-        self.loader = Loader(None, idcol="evtseq")
+        self.loader = Loader(None, idcol="evtseq", main_table_name="spill")
         self.file = h5.File("fake", "w", driver="core", backing_store=False)
         self.nranks = 3
         self.run_id = 12

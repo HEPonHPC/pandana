@@ -41,9 +41,10 @@ def createDataFrameFromFile(
 
 class Loader:
     def __init__(
-        self, filesource, idcol, stride=1, offset=0, limit=None, index=None, logger=None
+        self, filesource, idcol, main_table_name, stride=1, offset=0, limit=None, index=None, logger=None
     ):
         self.idcol = idcol
+        self.main_table_name = main_table_name
         self._files = SourceWrapper(filesource, stride, offset, limit)
         self.interactive = False
         # _tables stores the entire dataset read from file
@@ -57,13 +58,15 @@ class Loader:
         self.logger = logger
         self.dflist = collections.defaultdict(list)
         # add an extra var from spilltree to keep track of exposure
+        self._POT = None
         self.sum_POT()
 
     def getSource(self):
         return self._files
 
     def sum_POT(self):
-        self._POT = (self["spill"]["spillpot"]).sum()
+        if self.main_table_name == "spill":
+            self._POT = (self[self.main_table_name]["spillpot"]).sum()
 
     def add_spectrum(self, spec):
         if not spec in self.histdefs:
@@ -139,6 +142,7 @@ class Loader:
         return self._filegen()
 
     def calculateEventRange(self, group, rank, nranks):
+        assert(group is not None)
         begin, end = utils.mpiutils.calculate_slice_for_rank(
             rank, nranks, group[self.idcol].size
         )
@@ -146,7 +150,7 @@ class Loader:
         b, e = span[0], span[-1]
         return b, e
 
-    def createDataFrames(self, aFile):
+    def createDataFrames(self, a_file):
         """
         Create the DataFrames corresponding to aFile, which must be open.
         This populates self.dflist.
@@ -154,12 +158,12 @@ class Loader:
         """
         comm = MPI.COMM_WORLD
         begin_evt, end_evt = self.calculateEventRange(
-            aFile.get("spill"), comm.rank, comm.size
+            a_file.get(self.main_table_name), comm.rank, comm.size
         )
         for tablename in self._tables:
             # TODO: Loader should not need to access a protected member of DFProxy.
             new_df = createDataFrameFromFile(
-                aFile,
+                a_file,
                 tablename,
                 self._tables[tablename]._proxycols,
                 begin_evt,

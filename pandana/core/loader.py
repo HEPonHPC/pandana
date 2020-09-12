@@ -41,7 +41,15 @@ def createDataFrameFromFile(
 
 class Loader:
     def __init__(
-        self, filesource, idcol, main_table_name, stride=1, offset=0, limit=None, index=None, logger=None
+        self,
+        filesource,
+        idcol,
+        main_table_name,
+        stride=1,
+        offset=0,
+        limit=None,
+        index=None,
+        logger=None,
     ):
         self.idcol = idcol
         self.main_table_name = main_table_name
@@ -162,7 +170,7 @@ class Loader:
         return self._filegen()
 
     def calculateEventRange(self, group, rank, nranks):
-        assert(group is not None)
+        assert group is not None
         begin, end = utils.mpiutils.calculate_slice_for_rank(
             rank, nranks, group[self.idcol].size
         )

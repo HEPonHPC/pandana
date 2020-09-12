@@ -135,26 +135,26 @@ class Loader:
             ]
             return dfslice
 
-    def _set_proxy_for_key(self, key):
+    def _set_proxy_for_key(self, tablename : str):
         # Pick up the right index
         # TODO: This is experiment-specific. Remove this to some facility that can be provided to the Loader. How should
         # this functionality be provided by different experiments? Is the Loader the right thing to be managing such an
         # index?
-        index = (
-            KL if key.startswith("rec") else KLN if key.startswith("neutrino") else KLS
+        index_column_names = (
+            KL if tablename.startswith("rec") else KLN if tablename.startswith("neutrino") else KLS
         )
 
         # TODO: What does is mean for self.index to be falsy here? A well-named predicate would be better. Does it mean
-        # that some other function has not yet been called? Which function? The key (table name) starting with 'rec'
-        # is experiment-specific. Is the relevant feature that key is the name of a table that has one entry per
+        # that some other function has not yet been called? Which function? The tablename starting with 'rec'
+        # is experiment-specific. Is the relevant feature that tablename is the name of a table that has one entry per
         # primary atomic unit of processing (for the StandardRecord format, the slice/subevent)? Note the related test
         # above, which also sets the value of index to a special value under the same condition.
-        if self.index and key.startswith("rec"):
+        if self.index and tablename.startswith("rec"):
             # If we already have an index, this will just reset the value determined above.
-            index = self.index
+            index_column_names = self.index
 
         # Note we are already in a call to Loader.__getitem__; we are going to now call Loader.__setitem__.
-        self[key] = DFProxy(columns=index)
+        self[tablename] = DFProxy(columns=index_column_names)
 
     def setupGo(self):
         """

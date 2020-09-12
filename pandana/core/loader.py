@@ -62,7 +62,7 @@ class Loader:
         self.gone = False
         self.histdefs = []
         self.cutdefs = []
-        self.index = index
+        self.index = index # This is the only way that self.index ever gets set.
         self.logger = logger
         self.dflist = collections.defaultdict(list)
         # add an extra var from spilltree to keep track of exposure

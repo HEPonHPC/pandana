@@ -106,7 +106,7 @@ class Loader:
         # actually build the cache before Go()
         # TODO: Clarify this: is the behavior of __getitem__ different before Go() is called and after it is called?
         if type(key) == str and not key in self._tables:
-            self.set_proxy_for_key(key)
+            self._set_proxy_for_key(key)
         # assume key is a filtered index range after a cut
         if type(key) is not str:
             self._indices = key
@@ -127,7 +127,7 @@ class Loader:
             ]
             return dfslice
 
-    def set_proxy_for_key(self, key):
+    def _set_proxy_for_key(self, key):
         # Pick up the right index
         # TODO: This is experiment-specific. Remove this to some facility that can be provided to the Loader. How should
         # this functionality be provided by different experiments? Is the Loader the right thing to be managing such an

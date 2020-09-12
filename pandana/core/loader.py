@@ -59,6 +59,9 @@ class Loader:
         self.dflist = collections.defaultdict(list)
         # add an extra var from spilltree to keep track of exposure
         self._POT = None
+        # TODO: This call appears redundant, but it is not. Why not?
+        # self.sum_POT() will be called again later, but if this call is removed
+        # we fail to collect any events passing cuts.
         self.sum_POT()
 
     def getSource(self):
@@ -77,14 +80,19 @@ class Loader:
             self.cutdefs.append(cut)
 
     def reset_index(self):
+        # TODO: This does not reset self.index; it resets self._indices.
+        # Why is this?
+        #
         # reset after each Spectrum fill
         self._indices = None
 
     def __setitem__(self, key, df):
+        # TODO: This is very NOvA-specific. What is the generalization of this?
         # set multiindex for recTree data
         index = (
             KL if key.startswith("rec") else KLN if key.startswith("neutrino") else KLS
         )
+        # TODO: What does the Loader having an index imply? Give a test with a meaningful name.
         if self.index and key.startswith("rec"):
             index = self.index
         df.set_index(index, inplace=True)
@@ -193,7 +201,6 @@ class Loader:
         # TODO: Consider accumulating the results into spectra file-by-file, rather than reading all files before
         # filling any spectra.
         t0 = time.time()
-
         self.setupGo()
         if self.logger is not None:
             self.logger.info(f"main 0 NA aftersetupGo {now()}")

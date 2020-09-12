@@ -73,7 +73,7 @@ def main(input_files, idcol):
     logger.info(f'main 0 NA afterLoader {now()}')
     energy = Var(lambda tables: tables["rec.slc"]["calE"])
     logger.info(f'main 0 NA afterVar {now()}')
-    my_spectrum = Spectrum(tables, kNumuCutND, energy)
+    my_spectrum = Spectrum(tables, kNumuCutND, energy) # all the Loader.__getitem__ calls happen here
     logger.info(f'main 0 NA afterSpectrum {now()}')
     tables.Go()
     logger.info(f'main 0 NA afterGo {now()}')

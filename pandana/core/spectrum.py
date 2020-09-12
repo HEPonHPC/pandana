@@ -15,7 +15,9 @@ class Spectrum:
         with the given Loader.
 
         """
+        # TODO: Why do Spectrum objects have a name? Why is this not a feature of what contains the Spectrum?
         self._name = name
+        # TODO: This is experiment-specific and must be generalized.
         self._POT = None
 
         # associate this Spectrum, cut with Loader for filling
@@ -23,6 +25,7 @@ class Spectrum:
         tables.add_cut(cut)
 
         # save the var and cut functions so we can call __init__ during fill
+        # TODO: We should get rid of this need to call __init__ during fill.
         self._varfcn = var
         self._cutfcn = cut
         self._weightfcn = weight

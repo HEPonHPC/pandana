@@ -3,7 +3,7 @@
 The eid is calculated from the run/subrun/evt numbers in the group.
 """
 import h5py as h5
-from .vfuncs import eid as make_eid, make_evtseq_map, apply_evtseq_map
+from vfuncs import eid as make_eid, make_evtseq_map, apply_evtseq_map
 
 
 def add_eid(file):
@@ -13,26 +13,31 @@ def add_eid(file):
     :return None
     """
     for group_name in file:
-        group = file[group_name]
-        if "eid" not in group.keys():
-            run = group["run"][:].flatten()
-            print(
-                "Processing group {0} with column length {1}".format(
-                    group_name, run.size
-                )
-            )
-            subrun = group["subrun"][:].flatten()
-            evt = group["evt"][:].flatten()
-            eid_col = make_eid(run, subrun, evt)
-            shape = (run.size, 1)
-            group.create_dataset(
-                "eid",
-                data=eid_col,
-                shape=shape,
-                shuffle=True,
-                compression="gzip",
-                compression_opts=6,
-            )
+        a_group = file[group_name]
+        add_eid_to_group(a_group)
+
+
+def add_eid_to_group(group):
+    """
+    Add and 'eid' column to the given group.
+    :param group: an h5.Group object
+    :return: None
+    """
+    if "eid" not in group.keys():
+        run = group["run"][:].flatten()
+        subrun = group["subrun"][:].flatten()
+        evt = group["evt"][:].flatten()
+        print(f"Processing group {group.name} with column length {run.size}")
+        eid_col = make_eid(run, subrun, evt)
+        shape = (run.size, 1)
+        group.create_dataset(
+            "eid",
+            data=eid_col,
+            shape=shape,
+            shuffle=True,
+            compression="gzip",
+            compression_opts=6,
+        )
 
 
 def add_evtseq(file):
@@ -53,7 +58,7 @@ def add_evtseq(file):
             evtseq_col = apply_evtseq_map(evtseq_map, eid)
             shape = (eid.size, 1)
             group.create_dataset(
-                "evtseq",
+                "evt.seq",
                 data=evtseq_col,
                 shape=shape,
                 shuffle=True,

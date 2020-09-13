@@ -20,3 +20,4 @@ work-venv/
 local-analysis/
 _output.yml
 biblio.bib
+.hypothesis

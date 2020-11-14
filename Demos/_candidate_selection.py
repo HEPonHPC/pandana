@@ -7,57 +7,9 @@ handler = logging.FileHandler(f"cand_sel_{MPI.COMM_WORLD.rank}.log", mode="w")
 logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 logger.info('kind id name event timestamp')
-#logger.info("dset\tfirst\tlast")
 
-from time import time as now
-import h5py
 import numpy as np
-
-
-class MonkeyPatchedFile(h5py._hl.files.File):
-    orig_init = h5py._hl.files.File.__init__
-    orig_close = h5py._hl.files.File.close
-
-    def __init__(self, *args, **kwargs):
-        logger.info('file {0} {1} open {2}'.format(id(self), args[0], now()))
-        MonkeyPatchedFile.orig_init(self, *args, **kwargs)
-        # We keep our own copy of the filename, because when __del__ is called, we can no longer
-        # call get the filename from the base class -- because the file has already been closed,
-        # an no longer has a filename.
-        self.monkey_patched_filename = args[0]
-
-    def __del__(self):
-        logger.info('file {0} {1} finalize {2}'.format(id(self), self.monkey_patched_filename, now()))
-
-    def close(self):
-        logger.info('file {0} {1} close {2}'.format(id(self), self.monkey_patched_filename, now()))
-        MonkeyPatchedFile.orig_close(self)
-
-
-h5py._hl.files.File = MonkeyPatchedFile
-h5py.File = MonkeyPatchedFile
-
-
-class MonkeyPatchedDataset(h5py.Dataset):
-    orig_getitem = h5py._hl.dataset.Dataset.__getitem__
-
-    def __getitem__(self, *args):
-        idx = args[0]
-        if idx == ():
-            # logger.info(f"{self.name}\t0\t{self.size}")
-            sz = self.size
-        else:
-            #logger.info(f"{self.name}\t{idx.start}\t{idx.stop}")
-            sz = idx.stop-idx.start 
-
-        logger.info(f'dset {id(self)} {self.name} startread {now()}')
-        res = MonkeyPatchedDataset.orig_getitem(self, *args)
-        logger.info(f'dset {sz*res.dtype.itemsize} {self.name} endread {now()}')
-        return res
-
-
-h5py._hl.dataset.Dataset = MonkeyPatchedDataset
-h5py.Dataset = MonkeyPatchedDataset
+from time import time as now
 
 from context import pandana
 from pandana.core import *

@@ -9,6 +9,8 @@ from pandana.core.indices import KL, KLN, KLS
 from pandana import utils
 from time import time as now
 
+import logging
+logger = logging.getLogger("timing")
 
 def readDatasetFromGroup(group, datasetname, begin, end):
     # Determine range to be read here.
@@ -17,7 +19,9 @@ def readDatasetFromGroup(group, datasetname, begin, end):
     # dataset is a numpy.array, not a h5py.Dataset.
     ds = group.get(datasetname)  # ds is a h5py.Dataset
     # dataset = ds[()]  # read the whole dataset. Fails if it is non-scalar.
+    logger.info(f'dset {id(ds)} {ds.name} startread {now()}')
     dataset = ds[begin:end]
+    logger.info(f'dset {ds.nbytes} {ds.name} endread {now()}')
     if dataset.shape[1] == 1:
         dataset = dataset.flatten()
     else:

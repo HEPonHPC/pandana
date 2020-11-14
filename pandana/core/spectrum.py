@@ -3,6 +3,7 @@
 import h5py
 import pandas as pd
 import numpy as np
+import boost_histogram as bh
 
 
 class Spectrum:
@@ -93,7 +94,7 @@ class Spectrum:
             POT = self._POT
         if POT == 0.0:
             return np.zeros(bins), bins
-        n, bins = np.histogram(self._df, bins, range, weights=self._weight)
+        n, bins = bh.numpy.histogram(self._df, bins, range, weights=self._weight, storage = bh.storage.Double())
         return n * POT / self._POT, bins
 
     def entries(self):

@@ -3,7 +3,7 @@ import logging
 from mpi4py import MPI
 
 logger = logging.getLogger(__name__)
-handler = logging.FileHandler(f"cand_sel_{MPI.COMM_WORLD.rank}.log")
+handler = logging.FileHandler(f"cand_sel_{MPI.COMM_WORLD.rank}.log", mode="w")
 logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 logger.info('kind id name event timestamp')

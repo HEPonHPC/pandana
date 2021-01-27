@@ -170,7 +170,7 @@ kCosNumi = Var(kCosNumi)
 def kNumuMuE(tables):
   det = kDetID(tables)
   isRHC = kRHC(tables)
-  
+
   hdr_df = tables['rec.hdr']
   runs = hdr_df.assign(run=hdr_df.index.get_level_values('run'))['run']
   ntracks = (tables['rec.trk.kalman']['ntracks'] != 0)
@@ -194,10 +194,8 @@ def kNumuMuE(tables):
     trkcalactE = tables['rec.energy.numu']['ndtrkcalactE']
     trkcaltranE = tables['rec.energy.numu']['ndtrkcaltranE']
 
-    df = pd.concat([runs, det, isRHC, trklenact, trklencat], axis=1)
-    muE = df.apply(lambda x: \
-                   GetSpline(x['run'], x['det'], x['isRHC'], "act")(x['ndtrklenact']) + \
-                   GetSpline(x['run'], x['det'], x['isRHC'], "cat")(x['ndtrklencat']), axis = 1)
+    muE = pd.Series(kApplySpline(runs, det, isRHC, 'act', trklenact) + kApplySpline(runs, det, isRHC, 'cat', trklencat),
+                    index=det.index)
     muE[(trkcalactE == 0.) & (trkcaltranE == 0.)] = -5.
     return muE.where(ntracks, -5.)
 kNumuMuE = Var(kNumuMuE)
@@ -220,9 +218,8 @@ def kNumuHadE(tables):
       hadvisE[periods > 2] = 0.9949*hadvisE[periods > 2]
       hadvisE[periods <= 2] = 0.9844*hadvisE[periods <= 2]
   
-  df = pd.concat([runs, det, isRHC, hadvisE], axis=1)
-  hadE = df.apply(lambda x: \
-                 GetSpline(x['run'], x['det'], x['isRHC'], "had")(x['hadvisE']), axis = 1)
+  hadE = pd.Series(kApplySpline(runs, det, isRHC, 'had', hadvisE), 
+                   index=det.index)
   return hadE.where(ntracks, -5.)
 kNumuHadE = Var(kNumuHadE)
 

@@ -215,6 +215,7 @@ kNumuOptimizedContainFD = Cut(kNumuOptimizedContainFD)
 kNumuContainFD = kNumuProngsContainFD & kNumuOptimizedContainFD 
 
 kNumuNoPIDFD = kNumuQuality & kNumuContainFD
+
 # ND
 def kNumuContainND(tables):
     # check is a pandas.core.series.Series.
@@ -231,19 +232,17 @@ def kNumuContainND(tables):
     shw_contain = (shw_contain | no_shw)
 
     trk_df = tables['rec.trk.kalman.tracks'][['start.z', 'stop.z', 'rec.trk.kalman.tracks_idx']]
-    kalman_contain = False
-    if not trk_df.empty:
-      trk_df = trk_df.apply(lambda x: (x['rec.trk.kalman.tracks_idx'] == 0) | ((x['start.z'] <= 1275) & (x['stop.z'] <= 1275)), axis = 1)
-      kalman_contain = trk_df.groupby(level=KL).agg(np.all)
+    kalman_contain = (trk_df['rec.trk.kalman.tracks_idx'] == 0) | ((trk_df['start.z'] <= 1275) & (trk_df['stop.z'] <= 1275))
+    kalman_contain = kalman_contain.groupby(level=KL).agg(np.all)
 
     df_ntracks = tables['rec.trk.kalman']['ntracks']
     df_remid = tables['rec.trk.kalman']['idxremid']
     df_firstplane = tables['rec.slc']['firstplane']
     df_lastplane = tables['rec.slc']['lastplane']
     
-    first_trk = tables['rec.trk.kalman.tracks']['rec.trk.kalman.tracks_idx'] == 0
-    df_startz = tables['rec.trk.kalman.tracks'][first_trk]['start.z']
-    df_stopz  = tables['rec.trk.kalman.tracks'][first_trk]['stop.z']
+    first_trk = trk_df['rec.trk.kalman.tracks_idx'] == 0
+    df_startz = trk_df[first_trk]['start.z']
+    df_stopz  = trk_df[first_trk]['stop.z']
     
     df_containkalposttrans = tables['rec.sel.contain']['kalyposattrans']
     df_containkalfwdcellnd = tables['rec.sel.contain']['kalfwdcellnd']

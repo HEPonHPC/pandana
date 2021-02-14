@@ -274,20 +274,20 @@ kCCE = kNumuE
 #
 ###################################################################################
 
-def NusScale(isRHC, det):
-  if (isRHC and det == detector.kFD): return 1.18
-  if (isRHC and det == detector.kND): return 1.15
-  if (not isRHC and det == detector.kFD): return 1.2
-  if (not isRHC and det == detector.kND): return 1.11
-  else: return -5.
+kNusScaleFDFHC = 1.2
+kNusScaleFDRHC = 1.18
+kNusScaleNDFHC = 1.11
+kNusScaleNDRHC = 1.15
 
 def kNusEnergy(tables):
   det = kDetID(tables)
   isRHC = kRHC(tables)
-  cale = kCaloE(tables)
-  df = pd.concat([det, isRHC, cale], axis=1)
-  return df.apply(lambda x: \
-                 NusScale(x['isRHC'], x['det'])*x['calE'], axis = 1)
+  cale = kCaloE(tables).copy()
+  cale[(isRHC == 1) & (det == detector.kFD)] *= kNusScaleFDRHC
+  cale[(isRHC == 1) & (det == detector.kND)] *= kNusScaleNDRHC
+  cale[(isRHC == 0) & (det == detector.kFD)] *= kNusScaleFDFHC
+  cale[(isRHC == 0) & (det == detector.kND)] *= kNusScaleNDFHC
+  return cale
 kNusEnergy = Var(kNusEnergy)
 
 kClosestSlcTime = Var(lambda tables: tables['rec.slc']['closestslicetime'])

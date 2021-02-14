@@ -29,50 +29,16 @@ kHasPng  = Cut(lambda tables: tables['rec.vtx.elastic.fuzzyk']['npng'] > 0)
 ###################################################################################
 
 #Data Quality
-
-def kDibMaskHelper(l):
-    mask = l[0]
-
-    fp = l[1]
-    fpmin = fp
-    fpmax = fp
-
-    lp = l[2]
-    lpmin = lp
-    lpmax = lp
-
-    for i in range(fp, 14, 1):
-        if mask[13-i] == '0':
-            break
-        else:
-            fpmax = i
-
-    for i in range(fp, -1, -1):
-        if mask[13-i] == '0':
-            break
-        else:
-            fpmin = i
-
-    for i in range(lp, 14, 1):
-        if mask[13-i] == '0':
-            break
-        else:
-            lpmax = i
-
-    for i in range(lp, -1, -1):
-        if mask[13-i] == '0':
-            break
-        else:
-            lpmin = i
-    return (fpmin==lpmin) & (fpmax==lpmax) & (lpmax-fpmin+1>=4)
-
 def kNueApplyMask(tables):
     mask = tables['rec.hdr']['dibmask']
-    fp = tables['rec.slc']['firstplane']//64
-    lp = tables['rec.slc']['lastplane']//64
-    df = mask.apply(lambda x: bin(x)[2:].zfill(14))
-    df = pd.concat([df,fp,lp],axis=1)
-    return df.apply(kDibMaskHelper, axis=1)
+    fp = tables['rec.slc']['firstplane']
+    lp = tables['rec.slc']['lastplane']
+    FirstToFront = pd.Series(calcFirstLivePlane(mask.to_numpy(dtype=np.int32), fp.to_numpy(dtype=np.int32)), index=mask.index)
+    LastToFront  = pd.Series(calcFirstLivePlane(mask.to_numpy(dtype=np.int32), lp.to_numpy(dtype=np.int32)), index=mask.index)
+    FirstToBack  = pd.Series(calcLastLivePlane(mask.to_numpy(dtype=np.int32), fp.to_numpy(dtype=np.int32)), index=mask.index)
+    LastToBack   = pd.Series(calcLastLivePlane(mask.to_numpy(dtype=np.int32), lp.to_numpy(dtype=np.int32)), index=mask.index)
+    return (FirstToFront == LastToFront) & (FirstToBack == LastToBack) & \
+        ((LastToBack - FirstToFront + 1)/64 >= 4)
 kNueApplyMask = Cut(kNueApplyMask)
 
 kNueDQ = (kHitsPerPlane < 8) & kHasVtx & kHasPng
@@ -172,43 +138,16 @@ kNumuQuality = kNumuBasicQuality & (kCCE < 5.)
 kNumuProngsContainFD = (kDistAllTop > 60) & (kDistAllBottom > 12) & (kDistAllEast > 16) & \
                             (kDistAllWest > 12)  & (kDistAllFront > 18) & (kDistAllBack > 18)
 
-def kNumuDibMaskHelper(l):
-    mask = l[0]
-    
-    fd = l[1]//64
-    ld = l[2]//64
-
-    dmin = 0
-    dmax = 13
-
-    for i in range(fd, 14, 1):
-        if mask[13-i] == '0':
-            break
-        else:
-            dmax = i
-
-    for i in range(fd, -1, -1):
-        if mask[13-i] == '0':
-            break
-        else:
-            dmin = i
-
-    return ((l[1]-64*dmin) > 1) & ((64*(dmax+1)-l[2]-1) > 1) 
-
 def kNumuOptimizedContainFD(tables):
-    mask = tables['rec.hdr']['dibmask']
-    fp = tables['rec.slc']['firstplane']
-    lp = tables['rec.slc']['lastplane']
-    df = mask.apply(lambda x: bin(x)[2:].zfill(14))
-    df = pd.concat([df,fp,lp],axis=1)
-    df = df.apply(kNumuDibMaskHelper, axis=1, result_type='reduce')
+    ptf = planestofront(tables) > 1
+    ptb = planestoback(tables) > 1
 
     df_containkalfwdcell = tables['rec.sel.contain']['kalfwdcell'] > 6
     df_containkalbakcell = tables['rec.sel.contain']['kalbakcell'] > 6
     df_containcosfwdcell = tables['rec.sel.contain']['cosfwdcell'] > 0 
     df_containcosbakcell = tables['rec.sel.contain']['cosbakcell'] > 7
 
-    return df & df_containkalfwdcell & df_containkalbakcell & \
+    return ptf & ptb & df_containkalfwdcell & df_containkalbakcell & \
         df_containcosfwdcell & df_containkalbakcell
 kNumuOptimizedContainFD = Cut(kNumuOptimizedContainFD)
 

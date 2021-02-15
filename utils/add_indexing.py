@@ -52,7 +52,7 @@ def add_evtseq(file):
     evtseq_map = make_evtseq_map(file["/spill/eid"][:].flatten())
     for group_name in file:
         group = file[group_name]
-        if "evtseq" not in group.keys():
+        if "evt.seq" not in group.keys():
             print("Processing group {0}".format(group_name))
             eid = group["eid"][:].flatten()
             evtseq_col = apply_evtseq_map(evtseq_map, eid)

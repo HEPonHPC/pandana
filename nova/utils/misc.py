@@ -33,6 +33,7 @@ def GetPeriod(run, det):
     if (run <= 12086): return 5
     if (run <= 12516): return 6
     else: return 7
+GetPeriod = np.vectorize(GetPeriod, otypes=[np.int32])
 
 # stop all my pandana projects
 def StopAllUserProjects():

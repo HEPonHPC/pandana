@@ -1,11 +1,10 @@
 import numpy as np
 import pandas as pd
-from pandana.core.indices import KL
 from pandana.core.var import Var
-from pandana.utils import *
 
 from nova.utils.misc import *
 from nova.var.numuE_utils import *
+from nova.utils.index import KL
 
 import numba as nb
 
@@ -20,7 +19,6 @@ kRHC   = Var(lambda tables: tables['rec.spill']['isRHC'])
 kDetID = Var(lambda tables: tables['rec.hdr']['det'])
 
 # Containment vars
-
 @nb.vectorize([nb.int32(nb.int32,nb.int32)], nopython=True)
 def calcFirstLivePlane(mask, fp):
     fd = fp//64
@@ -91,67 +89,47 @@ kSparsenessAsymm = Var(lambda tables: tables['rec.sel.nuecosrej']['sparsenessasy
 
 kCaloE = Var(lambda tables: tables['rec.slc']['calE'])
 
-def kNueCalibrationCorr(det, ismc, run):
+def kNueCalibrationCorrFunc(det, ismc, run):
   if (det != detector.kFD): return 1.
   if not ismc: return 0.9949
   if run < 20753: return 0.9949/0.9844
   return 1.
+kNueCalibrationCorrFunc = np.vectorize(kNueCalibrationCorrFunc, otypes=[np.float32])
+
+def kNueCalibrationCorr(tables):
+    hdr_df = tables['rec.hdr'][['det','ismc']]
+    hdr_df['run'] = hdr_df.index.get_level_values('run')
+
+    scale = pd.Series(kNueCalibrationCorrFunc(hdr_df['det'], hdr_df['ismc'], hdr_df['run']),
+                      index=hdr_df.index)
+    return scale
+kNueCalibrationCorr = Var(kNueCalibrationCorr)
 
 def kEMEnergy(tables):
     lng_png = kLongestProng(tables)
-    isRHC = kRHC(tables)
 
     shwlid_df = tables['rec.vtx.elastic.fuzzyk.png.shwlid']
-    prim_png = shwlid_df['calE'][(shwlid_df['rec.vtx.elastic.fuzzyk.png_idx']==0)]
-
-  
-    png_df = tables['rec.vtx.elastic.fuzzyk.png']
+    prim_png_calE = shwlid_df['calE'].groupby(level=KL).first()
+      
     cvn_png_df = tables['rec.vtx.elastic.fuzzyk.png.cvnpart']
-    
     cvn_em_pid_df = cvn_png_df[['photonid',  \
                                 'pizeroid',  \
                                 'electronid']].sum(axis=1)
-    cvn_had_pid_df = cvn_png_df[['pionid',   \
-                                 'protonid', \
-                                 'neutronid',\
-                                 'otherid',  \
-                                 'muonid']].sum(axis=1)
 
-    cvn_em_calE = shwlid_df['calE'].where(                     \
-                            (cvn_em_pid_df > 0) &              \
-                            (cvn_em_pid_df >= cvn_had_pid_df), \
-                            0).groupby(level=KL).agg(np.sum)
+    cvn_em_calE = shwlid_df['calE'].where((cvn_em_pid_df >= 0.5), 0).groupby(level=KL).agg(np.sum)
+        
+    cvn_em_calE[cvn_em_calE == 0] = prim_png_calE
+    cvn_em_calE[lng_png >= 500] = prim_png_calE
 
-    if isRHC.agg(np.all):
-      cvn_em_calE[cvn_em_calE == 0] = prim_png[cvn_em_calE == 0]
-    else:
-      cvn_em_calE[lng_png >= 500] = prim_png[lng_png >= 500]
-
-    hdr_df = tables['rec.hdr']
-    det = hdr_df['det']
-    ismc = tables['rec.hdr']['ismc']
-    runs = hdr_df.assign(run=hdr_df.index.get_level_values('run'))['run']
-    df = pd.concat([runs, det, ismc], axis=1).dropna()
-    scale = df.apply(lambda x: kNueCalibrationCorr(x['det'], x['ismc'], x['run']), axis=1, result_type='reduce')
-
-    cvn_em_calE *= scale
-    cvn_em_calE.name = 'calE'
+    cvn_em_calE *= kNueCalibrationCorr(tables)
 
     return cvn_em_calE
 kEMEnergy = Var(kEMEnergy)
 
 def kHadEnergy(tables):
     EMEnergy = kEMEnergy(tables)
-    
-    hdr_df = tables['rec.hdr']
-    det = hdr_df['det']
-    ismc = tables['rec.hdr']['ismc']
-    runs = hdr_df.assign(run=hdr_df.index.get_level_values('run'))['run']
-    df = pd.concat([runs, det, ismc], axis=1).dropna()
-    scale = df.apply(lambda x: kNueCalibrationCorr(x['det'], x['ismc'], x['run']), axis=1, result_type='reduce')
-   
-    calE = tables['rec.slc']['calE']*scale
-    calE.name = 'calE'
+
+    calE = tables['rec.slc']['calE']*kNueCalibrationCorr(tables)
    
     HadEnergy = calE - EMEnergy
     return HadEnergy.where(HadEnergy > 0, 0)
@@ -194,52 +172,68 @@ kNueEnergy = Var(kNueEnergy)
 
 
 def kCosNumi(tables):
-    df = tables['rec.trk.kalman.tracks']
+    df = tables['rec.trk.kalman.tracks'][['dir.x','dir.y', 'dir.z']]
     # Primary kalman track only
-    df = df[df['rec.trk.kalman.tracks_idx']==0]
-    KalDir = df[['dir.x','dir.y', 'dir.z']]
+    df = df.groupby(level=KL).first()
+    CosNumi = pd.Series(np.zeros_like(df.shape[0]), index=df.index)
 
     # Use separate beam dir for each detector
     det = kDetID(tables)
-    if (det == detector.kFD).agg(np.all) and not det.empty:
-        CosFD = KalDir.mul(BeamDirFD, axis=1).sum(axis=1)
-        return CosFD
-    if (det == detector.kND).agg(np.all) and not det.empty:
-        CosND = KalDir.mul(BeamDirND, axis=1).sum(axis=1)
-        return CosND
+    CosNumi[det == detector.kND] = df.mul(BeamDirND, axis=1).sum(axis=1)
+    CosNumi[det == detector.kFD] = df.mul(BeamDirFD, axis=1).sum(axis=1)
+    return CosNumi
 kCosNumi = Var(kCosNumi)
 
-def kNumuMuE(tables):
+def kNumuMuEND(tables):
   det = kDetID(tables)
+  hdr_df = tables['rec.hdr'][['ismc']]
+  hdr_df['run'] = hdr_df.index.get_level_values('run')
+  runs = hdr_df['run']
   isRHC = kRHC(tables)
 
-  hdr_df = tables['rec.hdr']
-  runs = hdr_df.assign(run=hdr_df.index.get_level_values('run'))['run']
   ntracks = (tables['rec.trk.kalman']['ntracks'] != 0)
   
-  if (det == detector.kFD).agg(np.all) and not det.empty:
-    ismc = tables['rec.hdr']['ismc']
-    
-    trks = tables['rec.trk.kalman.tracks']
-    trklen = trks['len'][(trks['rec.trk.kalman.tracks_idx'] == 0)]/100
-    if not ismc.agg(np.all) and not ismc.empty:
-      trklen = trklen*0.9957
-    
-    df = pd.concat([runs, det, isRHC, trklen], axis=1).dropna()
-    muE = df.apply(lambda x: \
-                   GetSpline(x[0], x[1], x[2], "muon")(x[3]), axis = 1)
-    return muE.where(ntracks, -5.)
-  
-  else:
-    trklenact = tables['rec.energy.numu']['ndtrklenact']/100.
-    trklencat = tables['rec.energy.numu']['ndtrklencat']/100.
-    trkcalactE = tables['rec.energy.numu']['ndtrkcalactE']
-    trkcaltranE = tables['rec.energy.numu']['ndtrkcaltranE']
+  trklenact = tables['rec.energy.numu']['ndtrklenact']/100.
+  trklencat = tables['rec.energy.numu']['ndtrklencat']/100.
+  trkcalactE = tables['rec.energy.numu']['ndtrkcalactE']
+  trkcaltranE = tables['rec.energy.numu']['ndtrkcaltranE']
 
-    muE = pd.Series(kApplySpline(runs, det, isRHC, 'act', trklenact) + kApplySpline(runs, det, isRHC, 'cat', trklencat),
-                    index=det.index)
-    muE[(trkcalactE == 0.) & (trkcaltranE == 0.)] = -5.
-    return muE.where(ntracks, -5.)
+  df = pd.concat([runs, isRHC, trklenact, trklencat, det[det == detector.kND]], axis=1, join='inner')
+
+  muE = pd.Series(kApplySpline(df['run'], detector.kND, df['isRHC'], 'act', df['ndtrklenact']) + \
+                  kApplySpline(df['run'], detector.kND, df['isRHC'], 'cat', df['ndtrklencat']),
+                  index=df.index)
+  
+  muE[(trkcalactE == 0.) & (trkcaltranE == 0.)] = -5.
+  return muE.where(ntracks, -5.)
+kNumuMuEND = Var(kNumuMuEND)
+
+def kNumuMuEFD(tables):
+  det = kDetID(tables)
+  hdr_df = tables['rec.hdr']
+  ismc = hdr_df['ismc']
+  runs = hdr_df['run']
+  isRHC = kRHC(tables)
+
+  ntracks = (tables['rec.trk.kalman']['ntracks'] != 0)
+
+  trklen = tables['rec.trk.kalman.tracks']['len']/100
+  trklen[ismc == 1] *= 0.9957
+  trklen = trklen.groupby(level=KL).first()
+
+  df = pd.concat([runs, isRHC, trklen, det[det == detector.kFD]], axis=1, join='inner')
+
+  muE = pd.Series(kApplySpline(df['run'], detector.kFD, df['isRHC'], 'muon', df['len']),
+                  index=df.index)
+
+  return muE.where(ntracks, -5.)
+kNumuMuEFD = Var(kNumuMuEFD)
+
+def kNumuMuE(tables):
+  dfND = kNumuMuEND(tables)
+  dfFD = kNumuMuEFD(tables)
+
+  return pd.concat([dfND, dfFD])
 kNumuMuE = Var(kNumuMuE)
 
 def kNumuHadE(tables):
@@ -247,18 +241,16 @@ def kNumuHadE(tables):
   isRHC = kRHC(tables)
 
   hdr_df = tables['rec.hdr']
-  runs = hdr_df.assign(run=hdr_df.index.get_level_values('run'))['run']
+  ismc = hdr_df['ismc']
+  runs = hdr_df['run']
   
   hadvisE = tables['rec.energy.numu']['hadtrkE'] + tables['rec.energy.numu']['hadcalE']
   hadvisE.name = 'hadvisE'
-  ntracks = (tables['rec.trk.kalman']['ntracks'] != 0)
-  
-  if (det == detector.kFD).agg(np.all) and not det.empty:
-    ismc = tables['rec.hdr']['ismc']
-    if not ismc.agg(np.all) and not ismc.empty:
-      periods = runs.apply(lambda x: GetPeriod(x))
-      hadvisE[periods > 2] = 0.9949*hadvisE[periods > 2]
-      hadvisE[periods <= 2] = 0.9844*hadvisE[periods <= 2]
+  ntracks = (tables['rec.trk.kalman']['ntracks'] > 0)
+
+  periods = pd.Series(GetPeriod(runs, det), index = det.index)
+  hadvisE[(det == detector.kFD) & (ismc == 1) & (periods <= 2)] *= 0.9844
+  hadvisE[(det == detector.kFD) & (ismc == 1) & (periods >  2)] *= 0.9949
   
   hadE = pd.Series(kApplySpline(runs, det, isRHC, 'had', hadvisE), 
                    index=det.index)

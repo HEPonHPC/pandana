@@ -4,9 +4,7 @@ import h5py
 import pandas as pd
 from mpi4py import MPI
 
-from pandana import SourceWrapper, DFProxy
 from pandana.core.loader import Loader
-from pandana.core.indices import KL, KLN, KLS
 from pandana import utils
 
 

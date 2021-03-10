@@ -2,9 +2,10 @@ import pandas as pd
 import numpy as np
 
 from pandana.core import Cut
-from pandana.core.indices import KL
+
 from nova.utils.misc import *
 from nova.utils.enums import *
+from nova.utils.index import KL
 from nova.var.analysis_vars import *
 
 kIsFD = kDetID == detector.kFD
@@ -20,7 +21,7 @@ kVeto = Cut(lambda tables: tables['rec.sel.veto']['keep'] == 1)
 
 # Basic Reco Cuts
 kHasVtx  = Cut(lambda tables: tables['rec.vtx']['nelastic'] > 0)
-kHasPng  = Cut(lambda tables: tables['rec.vtx.elastic.fuzzyk']['npng'] > 0)
+kHasPng  = Cut(lambda tables: (tables['rec.vtx.elastic.fuzzyk']['npng'] > 0).groupby(level=KL).agg(np.all))
 
 ###################################################################################
 #
@@ -33,10 +34,14 @@ def kNueApplyMask(tables):
     mask = tables['rec.hdr']['dibmask']
     fp = tables['rec.slc']['firstplane']
     lp = tables['rec.slc']['lastplane']
-    FirstToFront = pd.Series(calcFirstLivePlane(mask.to_numpy(dtype=np.int32), fp.to_numpy(dtype=np.int32)), index=mask.index)
-    LastToFront  = pd.Series(calcFirstLivePlane(mask.to_numpy(dtype=np.int32), lp.to_numpy(dtype=np.int32)), index=mask.index)
-    FirstToBack  = pd.Series(calcLastLivePlane(mask.to_numpy(dtype=np.int32), fp.to_numpy(dtype=np.int32)), index=mask.index)
-    LastToBack   = pd.Series(calcLastLivePlane(mask.to_numpy(dtype=np.int32), lp.to_numpy(dtype=np.int32)), index=mask.index)
+    FirstToFront = pd.Series(calcFirstLivePlane(mask.to_numpy(dtype=np.int32), fp.to_numpy(dtype=np.int32)),
+                             index=mask.index)
+    LastToFront  = pd.Series(calcFirstLivePlane(mask.to_numpy(dtype=np.int32), lp.to_numpy(dtype=np.int32)),
+                             index=mask.index)
+    FirstToBack  = pd.Series(calcLastLivePlane(mask.to_numpy(dtype=np.int32), fp.to_numpy(dtype=np.int32)),
+                             index=mask.index)
+    LastToBack   = pd.Series(calcLastLivePlane(mask.to_numpy(dtype=np.int32), lp.to_numpy(dtype=np.int32)),
+                             index=mask.index)
     return (FirstToFront == LastToFront) & (FirstToBack == LastToBack) & \
         ((LastToBack - FirstToFront + 1)/64 >= 4)
 kNueApplyMask = Cut(kNueApplyMask)
@@ -78,14 +83,14 @@ kNueCVNCut = Cut(kNueCVNCut)
 kNueFD = kNueCVNCut & kNueCorePresel
 
 def kNueNDFiducial(tables):
-    check = tables['rec.vtx.elastic']['rec.vtx.elastic_idx'] == 0 
-    df = tables['rec.vtx.elastic'][check]
-    return (df['vtx.x'] > -100) & \
-        (df['vtx.x'] < 160) & \
-        (df['vtx.y'] > -160) & \
-        (df['vtx.y'] < 100) & \
-        (df['vtx.z'] > 150) & \
-        (df['vtx.z'] < 900)
+    df = tables['rec.vtx.elastic']
+    df = (df['vtx.x'] > -100) & \
+         (df['vtx.x'] < 160) & \
+         (df['vtx.y'] > -160) & \
+         (df['vtx.y'] < 100) & \
+         (df['vtx.z'] > 150) & \
+         (df['vtx.z'] < 900)
+    return df.groupby(level=KL).first()
 kNueNDFiducial = Cut(kNueNDFiducial)
 
 def kNueNDContain(tables):
@@ -155,22 +160,34 @@ kNumuContainFD = kNumuProngsContainFD & kNumuOptimizedContainFD
 
 kNumuNoPIDFD = kNumuQuality & kNumuContainFD
 
+def kNumuPID(tables):
+    return (tables['rec.sel.remid']['pid'] > 0.5) & \
+        (tables['rec.sel.cvn2017']['numuid'] > 0.1) & \
+        (tables['rec.sel.cvnProd3Train']['numuid'] > 0.7)
+kNumuPID = Cut(kNumuPID)
+
+def kNumuCosRej(tables):
+    return (tables['rec.sel.cosrej']['anglekal'] > 0.5) & \
+        (tables['rec.sel.cosrej']['numucontpid'] > 0.53) & \
+        (tables['rec.slc']['nhit'] < 400) & \
+        (tables['rec.sel.nuecosrej']['pngptp'] < 0.9)
+kNumuCosRej = Cut(kNumuCosRej)
+
+kNumuFD = kNumuPID & kNumuCosRej & kNumuNoPIDFD
+
 # ND
 def kNumuContainND(tables):
-    # check is a pandas.core.series.Series.
-    # it will have a MultiIndex with names 'run', 'subrun', 'cycle', 'evt' and 'subevt'.
-    check = tables['rec.vtx.elastic.fuzzyk.png']['rec.vtx.elastic_idx'] == 0
-
-    shw_df = tables['rec.vtx.elastic.fuzzyk.png.shwlid'][check]
+    shw_df = tables['rec.vtx.elastic.fuzzyk.png.shwlid']
     shw_df_trans = shw_df[['start.y','stop.y', 'start.x', 'stop.x']]
     shw_df_long = shw_df[['start.z', 'stop.z']]
-    no_shw = (tables['rec.vtx.elastic.fuzzyk']['nshwlid'] == 0)
+    no_shw = (tables['rec.vtx.elastic.fuzzyk']['nshwlid'] == 0).groupby(level=KL).first()
 
     shw_contain = ((shw_df_trans.min(axis=1) >= -180.) & (shw_df_trans.max(axis=1) <= 180.) & \
              (shw_df_long.min(axis=1) >= 20.) & (shw_df_long.max(axis=1) <= 1525.)).groupby(level=KL).agg(np.all)
     shw_contain = (shw_contain | no_shw)
 
-    trk_df = tables['rec.trk.kalman.tracks'][['start.z', 'stop.z', 'rec.trk.kalman.tracks_idx']]
+    trk_df = tables['rec.trk.kalman.tracks'][['start.z', 'stop.z']]
+    trk_df = trk_df.reset_index().set_index(KL)
     kalman_contain = (trk_df['rec.trk.kalman.tracks_idx'] == 0) | ((trk_df['start.z'] <= 1275) & (trk_df['stop.z'] <= 1275))
     kalman_contain = kalman_contain.groupby(level=KL).agg(np.all)
 
@@ -179,9 +196,8 @@ def kNumuContainND(tables):
     df_firstplane = tables['rec.slc']['firstplane']
     df_lastplane = tables['rec.slc']['lastplane']
     
-    first_trk = trk_df['rec.trk.kalman.tracks_idx'] == 0
-    df_startz = trk_df[first_trk]['start.z']
-    df_stopz  = trk_df[first_trk]['stop.z']
+    df_startz = trk_df['start.z'].groupby(level=KL).first()
+    df_stopz  = trk_df['stop.z'].groupby(level=KL).first()
     
     df_containkalposttrans = tables['rec.sel.contain']['kalyposattrans']
     df_containkalfwdcellnd = tables['rec.sel.contain']['kalfwdcellnd']
@@ -195,18 +211,11 @@ def kNumuContainND(tables):
            (df_startz < 1100 ) & (( df_containkalposttrans < 55) | (df_stopz < 1275) ) &\
            shw_contain &\
            kalman_contain
-
 kNumuContainND = Cut(kNumuContainND)
 
 kNumuNCRej = Cut(lambda tables: tables['rec.sel.remid']['pid'] > 0.75)
 
 kNumuNoPIDND = kNumuQuality & kNumuContainND
-
-def kNumuPID(tables):
-    return (tables['rec.sel.remid']['pid'] > 0.7) &\
-           (tables['rec.sel.cvnProd3Train']['numuid'] > 0.7) &\
-           (tables['rec.sel.cvn2017']['numuid'] > 0.1)
-kNumuPID = Cut(kNumuPID)
 
 kNumuCutND = kNumuQuality & kNumuContainND & kNumuPID
 
@@ -246,14 +255,13 @@ kNusNoPIDFD = (kNusFDPresel & kNusBackwardCut) & (~(kNusSlcTimeGap & kNusSlcDist
 # ND 
 
 def kNusNDFiducial(tables):
-    check = tables['rec.vtx.elastic']['rec.vtx.elastic_idx'] == 0 
     df = tables['rec.vtx.elastic'][check]
-    return (df['vtx.x'] > -100) & \
+    return ((df['vtx.x'] > -100) & \
         (df['vtx.x'] < 100) & \
         (df['vtx.y'] > -100) & \
         (df['vtx.y'] < 100) & \
         (df['vtx.z'] > 150) & \
-        (df['vtx.z'] < 1000)
+        (df['vtx.z'] < 1000)).groupby(level=KL).first()
 kNusNDFiducial = Cut(kNusNDFiducial)
 
 kNusNDContain = (kDistAllTop > 25) & (kDistAllBottom > 25) & \

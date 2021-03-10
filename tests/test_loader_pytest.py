@@ -10,7 +10,8 @@ import pandas as pd
 
 class TestLoader(TestCase):
     def setUp(self):
-        self.loader = Loader(None, idcol="evtseq", main_table_name="spill")
+        self.indices = ['run', 'subrun', 'evt', 'subevt']
+        self.loader = Loader(None, idcol="evt.seq", main_table_name="spill", indices=self.indices)
         self.file = h5.File("fake", "w", driver="core", backing_store=False)
         self.nranks = 3
         self.run_id = 12
@@ -42,7 +43,7 @@ class TestLoader(TestCase):
             "evt", data=np.array(self.event_ids), dtype=u4, shape=shape
         )
         self.spill_group.create_dataset(
-            "evtseq", data=np.arange(n_events), dtype=u8, shape=shape
+            "evt.seq", data=np.arange(n_events), dtype=u8, shape=shape
         )
         self.spill_group.create_dataset(
             "spillpot", data=np.random.random(n_events), shape=shape
@@ -90,7 +91,7 @@ class TestLoader(TestCase):
             shape=shape,
         )
         self.rec_energy_numu_group.create_dataset(
-            "evtseq",
+            "evt.seq",
             data=np.array(
                 [
                     self.event_id_to_evtseq[event_id]
@@ -174,14 +175,12 @@ class TestLoader(TestCase):
         for rank in range(self.nranks):
             b, e = self.loader.calculateEventRange(self.spill_group, rank, self.nranks)
             dflist.append(
-                pandana.core.loader.createDataFrameFromFile(
+                pandana.core.DataGroup(
                     self.file,
                     "spill",
-                    self.loader._tables["spill"]._proxycols,
-                    b,
-                    e,
-                    "evtseq",
-                )
+                    b, e,
+                    "evt.seq",
+                    self.indices)[['spillpot']]
             )
         all(self.assertIsInstance(df, pd.DataFrame) for df in dflist)
         num_rows_in_dataframes = [len(df.index) for df in dflist]
@@ -194,28 +193,24 @@ class TestLoader(TestCase):
     def test_createRecEnergyNumuDataFrame(self):
         print("Full dataframe")
         print(
-            pandana.core.loader.createDataFrameFromFile(
+            pandana.core.DataGroup(
                 self.file,
                 "rec.energy.numu",
-                ["run", "subrun", "evt", "subevt", "evtseq", "trkccE"],
-                0,
-                100,
-                "evtseq",
-            )
+                0, 100,
+                "evt.seq",
+                self.indices)[['trkccE']]
         )
 
         dflist = []
         for rank in range(self.nranks):
             b, e = self.loader.calculateEventRange(self.spill_group, rank, self.nranks)
             dflist.append(
-                pandana.core.loader.createDataFrameFromFile(
+                pandana.core.DataGroup(
                     self.file,
                     "rec.energy.numu",
-                    ["run", "subrun", "evt", "subevt", "evtseq", "trkccE"],
-                    b,
-                    e,
-                    "evtseq",
-                )
+                    b, e,
+                    "evt.seq",
+                    self.indices)[['trkccE']]
             )
         all(self.assertIsInstance(df, pd.DataFrame) for df in dflist)
         num_rows_in_dataframes = [len(df.index) for df in dflist]

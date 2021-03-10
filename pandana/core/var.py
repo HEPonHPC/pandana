@@ -1,13 +1,10 @@
-"""This module provides the class Var."""
-
 from pandana.core.cut import Cut
-
 
 class Var:
     """Represents a variable.
 
     A variable may be directly read from a dataframe,
-    of calulcated from one or more things that wereread,
+    calulcated from one or more things that were read,
     or calculated from other Vars.
     """
 
@@ -15,7 +12,11 @@ class Var:
         self._var = var
 
     def __call__(self, tables):
-        return self._var(tables)
+        # If this is the first call construct the dataframe and store in the tables
+        if not self in tables.ComputedVars:
+            tables.ComputedVars[self] = self._var(tables)
+        # Otherwise access directly from the tables
+        return tables.ComputedVars[self]
 
     def __eq__(self, val):
         return Cut(lambda tables: self(tables) == val)
@@ -41,8 +42,11 @@ class Var:
     def __sub__(self, other):
         return Var(lambda tables: self(tables) - other(tables))
 
-    def __mult__(self, other):
+    def __mul__(self, other):
         return Var(lambda tables: self(tables) * other(tables))
 
     def __truediv__(self, other):
         return Var(lambda tables: self(tables) / other(tables))
+
+    def __hash__(self):
+        return hash(self._var)

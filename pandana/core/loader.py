@@ -12,8 +12,8 @@ from pandana.core.datagroup import DataGroup
 class Loader:
     """A class for accessing data in h5py files."""
 
-    def __init__(self, file, idcol, main_table_name, indices):
-        self._file = file
+    def __init__(self, filename, idcol, main_table_name, indices):
+        self._file = filename
         self._idcol = idcol
         self._main_table_name = main_table_name
         self._indices = indices
@@ -25,8 +25,6 @@ class Loader:
         self.ComputedVars = {}
         self.ComputedCuts = {}
 
-        self._gone = False
-
     def add_spectrum(self, spec):
         if not spec in self._specdefs:
             self._specdefs.append(spec)
@@ -34,10 +32,10 @@ class Loader:
     def __getitem__(self, key):
         # An h5 file is assumed to be opened and
         # the event ranges already computed
-        if not self._gone:
-            return
+        # from calling Go()
+
         # If this is the first time this group is being accessed,
-        # read in the group and store it with the table
+        # initialize the group and store it with the table
         if not key in self._keys:
             self._keys[key] = DataGroup(self._openfile, key,
                                         self._begin_evt, self._end_evt,
@@ -59,10 +57,6 @@ class Loader:
         Iterate through the associated spectra and compute the cuts and vars for each
         :return: None
         """
-        if self._gone:
-            return
-        self._gone = True
-
         logger.info(f"main 0 NA startGo {now()}")
 
         # Open the input file

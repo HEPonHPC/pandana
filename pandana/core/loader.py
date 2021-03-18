@@ -13,6 +13,7 @@ class Loader:
     """A class for accessing data in h5py files."""
 
     def __init__(self, filename, idcol, main_table_name, indices):
+        if type(filename) is not list: filename = [filename]
         self._file = filename
         self._idcol = idcol
         self._main_table_name = main_table_name
@@ -59,30 +60,35 @@ class Loader:
         """
         logger.info(f"main 0 NA startGo {now()}")
 
-        # Open the input file
-        self._openfile = h5py.File(self._file, 'r')
+        for f in self._file:
+            # Open the input file
+            self._openfile = h5py.File(f, 'r')
 
-        # Compute the event range for this MPI rank
-        comm = MPI.COMM_WORLD
-        self._begin_evt, self._end_evt = self.calculateEventRange(
-            self._openfile.get(self._main_table_name), comm.rank, comm.size
-        )
+            # Compute the event range for this MPI rank
+            comm = MPI.COMM_WORLD
+            self._begin_evt, self._end_evt = self.calculateEventRange(
+                self._openfile.get(self._main_table_name), comm.rank, comm.size
+            )
 
-        logger.info(f"main 0 NA beforefillSpectra {now()}")
+            logger.info(f"main 0 NA beforefillSpectra {now()}")
 
-        # FILL ALL SPECTRA
+            # FILL ALL SPECTRA for this file
+            for spec in self._specdefs:
+                spec.fill()
+
+            logger.info(f"main 0 NA afterfillSpectra {now()}")
+
+            # EXTERMINATE
+            self._openfile.close()
+            self.reset()
+
+        # Combine together result for each file
         for spec in self._specdefs:
-            spec.fill()
-
-        logger.info(f"main 0 NA afterfillSpectra {now()}")
-
-        # EXTERMINATE
-        self._openfile.close()
-        self.cleanup()
+            spec.finalize()
 
         logger.info(f"main 0 NA aftercleanup {now()}")
 
-    def cleanup(self):
-        self._specdefs = None
-        self.ComputedVars = None
-        self.ComputedCuts = None
+    def reset(self):
+        self._keys = {}
+        self.ComputedVars = {}
+        self.ComputedCuts = {}

@@ -14,6 +14,9 @@ class Spectrum:
         self._var = var
         self._wgt = weight
 
+        self._dfvars = []
+        self._dfwgts = []
+
     def fill(self):
         # Compute the var and complete cut
         dfvar = self._var(self._tables)
@@ -23,16 +26,28 @@ class Spectrum:
         # The two dataframes need to be aligned in this case
         if not dfvar.index.equals(dfcut.index):
             dfcut, dfvar = dfcut.align(dfvar, axis=0, join='inner')
-        self._df = dfvar.loc[dfcut.to_numpy()]
+        dfvar = dfvar.loc[dfcut.to_numpy()]
 
         # Compute weights
         if self._wgt is not None:
             dfwgt = self._wgt(self._tables)
             # align the weights to the var
             # TODO: Is 0 the right fill?
-            self._weight, _ = dfwgt.align(self._df, axis=0, join='right', fill_value=0)
+            dfwgt, _ = dfwgt.align(dfvar, axis=0, join='right', fill_value=0)
         else:
-            self._weight = pd.Series(1, self._df.index, name='weight')
+            dfwgt = pd.Series(1, dfvar.index, name='weight')
+
+        self._dfvars.append(dfvar)
+        self._dfwgts.append(dfwgt)
+
+    def finalize(self):
+        assert(len(self._dfvars) == len(self._dfwgts))
+        if len(self._dfvars) > 1:
+            self._df = pd.concat(self._dfvars, axis=0)
+            self._weight = pd.concat(self._dfwgts, axis=0)
+        else:
+            self._df = self._dfvars[0]
+            self._weight = self._dfwgts[0]
 
     def df(self):
         return self._df

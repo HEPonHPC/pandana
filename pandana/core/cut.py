@@ -18,13 +18,27 @@ class Cut:
         return Cut(lambda tables: ~self(tables))
 
     def __and__(self, other):
-        return Cut(lambda tables: self(tables) & other(tables))
-
-    def __or__(self, other):
-        # It seems | is not commutative for dataframes? Do this for now
-        def orcut(tables):
+        def AndCut(tables):
             df1 = self(tables)
             df2 = other(tables)
-            df = pd.concat([df1,df2], axis=1, join='outer').fillna(False)
-            return df.any(axis=1)
-        return Cut(orcut)
+
+            if not df1.index.equals(df2.index):
+                df2, df1 = df2.align(df1, axis=0, join='inner')
+            ret = df1.to_numpy() & df2.to_numpy()
+            ret = pd.Series(ret, index=df1.index)
+
+            return ret
+        return Cut(AndCut)
+
+    def __or__(self, other):
+        def OrCut(tables):
+            df1 = self(tables)
+            df2 = other(tables)
+
+            if not df1.index.equals(df2.index):
+                df2, df1 = df2.align(df1, axis=0, join='inner')
+            ret = df1.to_numpy() | df2.to_numpy()
+            ret = pd.Series(ret, index=df1.index)
+
+            return ret
+        return Cut(OrCut)

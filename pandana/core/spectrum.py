@@ -18,16 +18,21 @@ class Spectrum:
         # Compute the var and complete cut
         dfvar = self._var(self._tables)
         dfcut = self._cut(self._tables)
-
+        
         # We allow the cut to have any subset of the indices used in the var
         # The two dataframes need to be aligned in this case
-        dfcut, dfvar = dfcut.align(dfvar, axis=0, join='inner')
-        self._df = dfvar[dfcut]
+        if not dfvar.index.equals(dfcut.index):
+            dfcut, dfvar = dfcut.align(dfvar, axis=0, join='inner')
+        self._df = dfvar.loc[dfcut.to_numpy()]
 
-        # initial weights are all 1
-        self._weight = pd.Series(1.0, self._df.index, name="weight")
+        # Compute weights
         if self._wgt is not None:
-            self._weight *= self._wgt(self._tables)
+            dfwgt = self._wgt(self._tables)
+            # align the weights to the var
+            # TODO: Is 0 the right fill?
+            self._weight, _ = dfwgt.align(self._df, axis=0, join='right', fill_value=0)
+        else:
+            self._weight = pd.Series(1, self._df.index, name='weight')
 
     def df(self):
         return self._df
@@ -39,7 +44,8 @@ class Spectrum:
         return self._df.shape[0]
 
     def histogram(self, bins, range=None):
-        n, bins = bh.numpy.histogram(self._df, bins, range, weights=self._weight, storage = bh.storage.Double())
+        n, bins = bh.numpy.histogram(self._df, bins, range, weights=self._weight,
+                                     storage = bh.storage.Double())
         return n, bins
 
     def integral(self):

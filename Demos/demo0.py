@@ -1,16 +1,7 @@
-import os
 import sys
 
-from pandana.core.loader import Loader
-from pandana.core.var import Var
-
-newdir = "/".join(os.path.dirname(os.path.realpath(__file__)).split("/")[:-2])
-sys.path.insert(0, newdir)
-
 from pandana.core import *
-
-#  import matplotlib.pyplot as plt
-#  import xkcd
+from nova.utils.index import index
 
 # Simple var
 kSlcE = Var(lambda tables: tables["rec.slc"]["calE"])
@@ -18,10 +9,9 @@ kSlcE = Var(lambda tables: tables["rec.slc"]["calE"])
 # Simple cut
 kEnergyCut = (kSlcE > 1) & (kSlcE < 4)
 
-# Latest h5s from Karl
-loc = sys.argv[1]
-files = [os.path.join(loc, f) for f in os.listdir(loc) if "h5caf.h5" in f]
-tables = Loader(files, limit=50)
+# Construct loader from a file
+fname = sys.argv[1]
+tables = Loader(fname, idcol='evt.seq', main_table_name='spill', indices=index)
 
 # Create a Spectrum
 myspectrum = Spectrum(tables, kEnergyCut, kSlcE)
@@ -30,16 +20,9 @@ myspectrum = Spectrum(tables, kEnergyCut, kSlcE)
 tables.Go()
 
 print("myspectrum internal dataframe: ")
-print(myspectrum.df().head())
+print(myspectrum.df())
 
-#  n, bins = myspectrum.histogram(bins=50, range=(1,4))
-#
-#  print('Selected ' + str(n.sum()) + ' events from ' + str(myspectrum.POT()) + ' POT.')
-#
-#  plt.hist(bins[:-1], bins=bins, weights=n, histtype='step', color='xkcd:dark blue', label='FluxSwap')
-#  plt.xlabel('Slice calE')
-#  plt.ylabel('Events')
-#
-#  plt.legend(loc='upper right')
-#
-#  plt.show()
+n, bins = myspectrum.histogram(bins=10, range=(1,4))
+print('Selected',n.sum(),'events.')
+print('Bin Contents: ')
+print(n)

@@ -1,19 +1,12 @@
 import sys
 
-from pandana.core.loader import Loader
-from pandana.core.var import Var
-
-sys.path.append("../..")
-
 from pandana.core import *
-import matplotlib.pyplot as plt
+from nova.utils.index import index, KL
 
 # Better var
 def kPngE(tables):
     df = tables["rec.vtx.elastic.fuzzyk.png"]["calE"]
     return df.groupby(level=KL).sum()
-
-
 kPngE = Var(kPngE)
 # NOTE: No check that there are actually prongs in the event
 # The rec.vtx.elastic.fuzzyk.png dataset already only has events with prongs
@@ -28,34 +21,22 @@ def kFiducial(tables):
         & (df["vtx.y"] > -180)
         & (df["vtx.z"] < 1000)
         & (df["vtx.z"] > 50)
-    )
-
-
+    ).groupby(level=KL).first()
 kFiducial = Cut(kFiducial)
 
-# Latest h5s from Karl
-loc = "/pnfs/nova/persistent/users/karlwarb/HDF5-Training-19-02-26/FD-FluxSwap-FHC"
-files = [os.path.join(loc, f) for f in os.listdir(loc) if "h5caf.h5" in f]
-tables = Loader(files, limit=100)
+# Dumb oscillation weights
+kDumbOsc = Var(lambda tables: tables['rec.mc.nu']['woscdumb'].groupby(level=KL).first())
+
+# Initialize the loader
+fname = sys.argv[1]
+tables = Loader(fname, idcol='evt.seq', main_table_name='spill', indices=index)
 
 # Create a Spectrum
-myspectrum = Spectrum(tables, kFiducial, kPngE)
+myspectrum = Spectrum(tables, kFiducial, kPngE, kDumbOsc)
 
 # Let's do it!
 tables.Go()
 
-print("myspectrum internal dataframe: ")
-print((myspectrum.df().head()))
+print("Weighted number of selected events")
+print((myspectrum.integral()))
 
-n, bins = myspectrum.histogram(bins=20, range=(1, 4))
-
-print(("Selected " + str(n.sum()) + " events"))
-
-plt.hist(bins[:-1], bins=bins, weights=n)
-
-plt.xlabel("Prong Energy")
-plt.ylabel("Events")
-
-plt.legend(loc="upper right")
-
-plt.show()

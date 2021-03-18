@@ -8,11 +8,11 @@
 # Includes
 import sys
 
-from pandana.core.loader import Loader
-from pandana.core.var import Var
-
-sys.path.append("../..")
+# PandAna import
 from pandana.core import *
+
+# NOvA import
+from nova.utils.index import index, KL
 
 # analysis packages
 import numpy as np
@@ -32,7 +32,7 @@ import matplotlib.pyplot as plt
 kTwoProng = Cut(
     lambda tables: (tables["rec.vtx.elastic.fuzzyk"]["npng"] == 2)
     .groupby(level=KL)
-    .agg(np.any)
+    .first()
 )
 
 ###########################################
@@ -43,11 +43,9 @@ kTwoProng = Cut(
 def kGammaCut(tables):
     df = tables["rec.vtx.elastic.fuzzyk.png.cvnpart"]["photonid"]
     return (df > 0.75).groupby(level=KL).agg(np.all)
-
-
 kGammaCut = Cut(kGammaCut)
 
-# Loose containment
+# Loose containment cut
 def kContain(tables):
     df = tables["rec.vtx.elastic"]
     return (
@@ -57,9 +55,7 @@ def kContain(tables):
         & (df["vtx.y"] > -180)
         & (df["vtx.z"] < 1000)
         & (df["vtx.z"] > 50)
-    )
-
-
+    ).groupby(level=KL).first()
 kContain = Cut(kContain)
 
 kPlaneGap = Cut(
@@ -81,12 +77,7 @@ kTruePi0 = Cut(lambda tables: tables["rec.sand.nue"]["npi0"] > 0)
 # Computes the invariant mass of two prong events
 ###########################################
 def kMass(tables):
-    # Note: We could leave this check out, but you would get a warning about taking
-    # the sqrt of negative numbers at the end (it won't crash like cafana).
-    # dataframes can support NaNs just fine.
-    check = tables["rec.vtx.elastic.fuzzyk"]["npng"] == 2
-
-    df = tables["rec.vtx.elastic.fuzzyk.png"][check]
+    df = tables["rec.vtx.elastic.fuzzyk.png"]
     x = df["dir.x"]
     y = df["dir.y"]
     z = df["dir.z"]
@@ -110,23 +101,16 @@ def kMass(tables):
     # return a dataframe with a single column of the invariant mass
     deadscale = 0.8747
     return 1000 * deadscale * np.sqrt(2 * EProd * (1 - dot))
-    # note NaNs can be removed by (df == df)
-
-
 kMass = Var(kMass)
 
 if __name__ == "__main__":
-    import time
+    # MC loader
+    fmc = sys.argv[1]
+    tablesMC = Loader(fmc, idcol='evt.seq', main_table_name='spill', indices=index)
 
-    start = time.time()
-    # Latest hdf5s as of 22-04-2019
-    dMC = "/pnfs/nova/persistent/users/karlwarb/HDF5-Training-19-02-26/ND-GIBUU-FHC"
-    filesMC = [os.path.join(dMC, f) for f in os.listdir(dMC) if "h5caf.h5" in f]
-    tablesMC = Loader(filesMC, limit=100)
-
-    dData = "/pnfs/nova/persistent/users/karlwarb/HDF5-Training-19-02-26/ND-Data-FHC"
-    filesData = [os.path.join(dData, f) for f in os.listdir(dData) if "h5caf.h5" in f]
-    tablesData = Loader(filesData, limit=100)
+    # Data loader
+    fdata = sys.argv[2]
+    tablesData = Loader(fdata, idcol='evt.seq', main_table_name='spill', indices=index)
 
     # Define cuts
     # The cut class knows how to interpret & and ~
@@ -138,13 +122,8 @@ if __name__ == "__main__":
     bkg = Spectrum(tablesMC, cutBkg, kMass)
     tot = Spectrum(tablesMC, cutTot, kMass)
 
-    print(time.time() - start)
     tablesData.Go()
     tablesMC.Go()
-    print(time.time() - start)
-    POT = data.POT()
-
-    print(("Found " + str(data.POT()) + " POT. Scaling to " + str(POT) + " POT."))
 
     print(("Selected " + str(data.entries()) + " events in data."))
     print(("Selected " + str(tot.entries()) + " events in MC."))
@@ -152,23 +131,24 @@ if __name__ == "__main__":
 
     # Do an analysis!
     # With Spectra
-    inttot = tot.integral(POT=POT)
-    intbkg = bkg.integral(POT=POT)
+    inttot = tot.integral()
+    intbkg = bkg.integral()
     pur = (inttot - intbkg) / inttot
     print(("This selection has a pi0 purity of " + str(pur)))
 
     # With histograms
-    nbins = 8
-    range = (0, 400)
-    d, bins = data.histogram(nbins, range, POT=POT)
-    m, _ = tot.histogram(nbins, range, POT=POT)
-    b, _ = bkg.histogram(nbins, range, POT=POT)
+    nbins = 10
+    range_ = (0, 400)
+    d, bins = data.histogram(nbins, range_)
+    m, _ = tot.histogram(nbins, range_)
+    b, _ = bkg.histogram(nbins, range_)
 
+    # Fit to gaussian
     def gaussian(x, x0, a, stdev, o):
         return a * np.exp(-(((x - x0) / stdev) ** 2) / 2) + o
 
     centers = (bins[:-1] + bins[1:]) / 2
-
+    
     # A bug in scipy.optimize.curvefit requires these to be float64s instead of float32s.
     dataparam, datacov = curve_fit(
         gaussian, centers.astype(np.float64), d, p0=[135.0, np.max(d), 15.0, 0]
@@ -185,7 +165,6 @@ if __name__ == "__main__":
     mcmu = "MC $\mu$: " + "%.1f" % mcparam[0] + "$\pm$" + "%.1f" % mcerr[0]
     mcsi = "MC $\sigma$: " + "%.1f" % mcparam[2] + "$\pm$" + "%.1f" % mcerr[2]
 
-    # <codecell>
     # Plots time
     plt.figure(1, figsize=(6, 4))
 

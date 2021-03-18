@@ -2,7 +2,8 @@ from .context import pandana
 from unittest import TestCase
 import pandana.core.loader
 from pandana.core.loader import Loader
-import pandana.core.loader
+from pandana.core.var import Var
+from pandana.core.cut import Cut
 import h5py as h5
 import numpy as np
 import pandas as pd
@@ -11,7 +12,6 @@ import pandas as pd
 class TestLoader(TestCase):
     def setUp(self):
         self.indices = ['run', 'subrun', 'evt', 'subevt']
-        self.loader = Loader(None, idcol="evt.seq", main_table_name="spill", indices=self.indices)
         self.file = h5.File("fake", "w", driver="core", backing_store=False)
         self.nranks = 3
         self.run_id = 12
@@ -21,6 +21,10 @@ class TestLoader(TestCase):
         np.random.seed(123)
         self.create_spill_group()
         self.create_rec_energy_numu_group()
+        self.loader = Loader(None, idcol="evt.seq", main_table_name="spill", indices=self.indices)
+        self.loader._openfile = self.file
+        self.loader._begin_evt = 0
+        self.loader._end_evt = 100
 
     def create_spill_group(self):
         """
@@ -217,3 +221,28 @@ class TestLoader(TestCase):
         for df in dflist:
             print(df)
         self.assertEqual(num_rows_in_dataframes, [8, 3, 1])
+
+    def test_cutloader(self):
+        def kSimpleVar(tables):
+            df = tables['rec.energy.numu']['trkccE']
+            return df
+        kSimpleVar = Var(kSimpleVar)
+        
+        kCut1 = kSimpleVar > 0.5
+        self.assertEqual(kCut1(self.loader).sum(), 4)
+
+        kCut2 = kSimpleVar <= 0.5
+        
+        kAndCut = kCut1 & kCut2
+        self.assertEqual(kAndCut(self.loader).sum(), 0)
+
+        kOrCut = kCut1 | kCut2
+        self.assertEqual(kOrCut(self.loader).sum(), 12)
+
+        kSpillCut = Cut(lambda tables: tables['spill']['spillpot'] > 0.5)
+
+        kUnalignAndCut = kCut1 & kSpillCut
+        self.assertEqual(kUnalignAndCut(self.loader).sum(), 3)
+
+        kUnalignOrCut = kCut1 | kSpillCut
+        self.assertEqual(kUnalignOrCut(self.loader).sum(), 9)

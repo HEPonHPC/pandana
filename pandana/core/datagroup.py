@@ -1,9 +1,5 @@
 import pandas as pd
 
-from time import time as now
-import logging
-logger = logging.getLogger("timing")
-
 class DataGroup:
     """Represents a group in an hdf5 file"""
 
@@ -26,10 +22,7 @@ class DataGroup:
         # (not runs, subruns, or subevents, but events) we are to process.
         # dataset is a numpy.array, not a h5py.Dataset.
         ds = self._group.get(datasetname)  # ds is a h5py.Dataset
-
-        logger.info(f'dset {id(ds)} {ds.name} startread {now()}')
         dataset = ds[self._begin_row:self._end_row]
-        logger.info(f'dset {ds.nbytes} {ds.name} endread {now()}')
 
         if dataset.shape[1] == 1:
             dataset = dataset.flatten()

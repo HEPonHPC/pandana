@@ -6,7 +6,7 @@ class Spectrum:
     """Represents a histogram of some quantity."""
 
     def __init__(self, loader, cut, var, weight = None):
-        # Associate this spectrum with the tables
+        # Associate this spectrum with the loader
         loader.add_spectrum(self)
 
         self._cut = cut

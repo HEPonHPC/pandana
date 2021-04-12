@@ -1,9 +1,5 @@
 import h5py
 
-from time import time as now
-import logging
-logger = logging.getLogger("timing")
-
 from pandana.core.tables import Tables
 
 class Loader:
@@ -27,8 +23,6 @@ class Loader:
         Iterate through the associated spectra and compute the cuts and vars for each
         :return: None
         """
-        logger.info(f"main 0 NA startGo {now()}")
-
         for f in self._files:
             # Open the input file
             h5file = h5py.File(f, 'r')
@@ -36,13 +30,9 @@ class Loader:
             # Construct the tables for this file
             tables = Tables(h5file, self._idcol, self._main_table_name, indices = self._indices)
 
-            logger.info(f"main 0 NA beforefillSpectra {now()}")
-
             # FILL ALL SPECTRA for this file
             for spec in self._specdefs:
                 spec.fill(tables)
-
-            logger.info(f"main 0 NA afterfillSpectra {now()}")
 
             # EXTERMINATE
             h5file.close()
@@ -50,5 +40,3 @@ class Loader:
         # Combine together result for each file
         for spec in self._specdefs:
             spec.finalize()
-
-        logger.info(f"main 0 NA aftercleanup {now()}")

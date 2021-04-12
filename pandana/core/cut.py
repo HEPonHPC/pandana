@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 import pandas as pd
 
 class Cut:
@@ -6,13 +8,10 @@ class Cut:
     def __init__(self, cut):
         self._cut = cut
 
+    # Remember result for each instance of tables
+    @lru_cache(maxsize=1)
     def __call__(self, tables):
-        # If this is the first call construct the dataframe and store in the tables
-        if not self in tables.ComputedCuts:
-            df = self._cut(tables)
-            tables.ComputedCuts[self] = df
-        # Otherwise access directly from the tables
-        return tables.ComputedCuts[self]
+        return self._cut(tables)
 
     def __invert__(self):
         return Cut(lambda tables: ~self(tables))

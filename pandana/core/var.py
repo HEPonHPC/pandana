@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from pandana.core.cut import Cut
 
 class Var:
@@ -11,12 +13,10 @@ class Var:
     def __init__(self, var):
         self._var = var
 
+    # Remember result for each instance of tables
+    @lru_cache(maxsize=1)
     def __call__(self, tables):
-        # If this is the first call construct the dataframe and store in the tables
-        if not self in tables.ComputedVars:
-            tables.ComputedVars[self] = self._var(tables)
-        # Otherwise access directly from the tables
-        return tables.ComputedVars[self]
+        return self._var(tables)
 
     def __eq__(self, val):
         return Cut(lambda tables: self(tables) == val)

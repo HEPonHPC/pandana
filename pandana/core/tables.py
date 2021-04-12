@@ -18,9 +18,6 @@ class Tables:
         
         self._keys = {}
 
-        self.ComputedVars = {}
-        self.ComputedCuts = {}
-
     def __getitem__(self, key):
         # An h5 file is assumed to be opened and
         # the event ranges already computed

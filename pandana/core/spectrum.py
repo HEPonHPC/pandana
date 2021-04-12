@@ -5,11 +5,10 @@ import boost_histogram as bh
 class Spectrum:
     """Represents a histogram of some quantity."""
 
-    def __init__(self, tables, cut, var, weight = None):
+    def __init__(self, loader, cut, var, weight = None):
         # Associate this spectrum with the tables
-        tables.add_spectrum(self)
+        loader.add_spectrum(self)
 
-        self._tables = tables
         self._cut = cut
         self._var = var
         self._wgt = weight
@@ -17,10 +16,10 @@ class Spectrum:
         self._dfvars = []
         self._dfwgts = []
 
-    def fill(self):
+    def fill(self, tables):
         # Compute the var and complete cut
-        dfvar = self._var(self._tables)
-        dfcut = self._cut(self._tables)
+        dfvar = self._var(tables)
+        dfcut = self._cut(tables)
         
         # We allow the cut to have any subset of the indices used in the var
         # The two dataframes need to be aligned in this case
@@ -30,7 +29,7 @@ class Spectrum:
 
         # Compute weights
         if self._wgt is not None:
-            dfwgt = self._wgt(self._tables)
+            dfwgt = self._wgt(tables)
             # align the weights to the var
             # TODO: Is 0 the right fill?
             dfwgt, _ = dfwgt.align(dfvar, axis=0, join='right', fill_value=0)

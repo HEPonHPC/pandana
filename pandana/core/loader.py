@@ -37,6 +37,9 @@ class Loader:
             # EXTERMINATE
             h5file.close()
 
+        self.Finish()
+
+    def Finish(self):
         # Combine together result for each file
         for spec in self._specdefs:
-            spec.finalize()
+            spec.finish()

@@ -20,11 +20,11 @@ class Spectrum:
         # Compute the var and complete cut
         dfvar = self._var(tables)
         dfcut = self._cut(tables)
-        
+
         # We allow the cut to have any subset of the indices used in the var
         # The two dataframes need to be aligned in this case
         if not dfvar.index.equals(dfcut.index):
-            dfcut, dfvar = dfcut.align(dfvar, axis=0, join='inner')
+            dfvar, dfcut = dfvar.align(dfcut, axis=0, join='inner')
         dfvar = dfvar.loc[dfcut.to_numpy()]
 
         # Compute weights
@@ -39,7 +39,7 @@ class Spectrum:
         self._dfvars.append(dfvar)
         self._dfwgts.append(dfwgt)
 
-    def finalize(self):
+    def finish(self):
         assert(len(self._dfvars) == len(self._dfwgts))
         if len(self._dfvars) > 1:
             self._df = pd.concat(self._dfvars, axis=0)

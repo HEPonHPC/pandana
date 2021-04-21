@@ -1,5 +1,3 @@
-from functools import lru_cache
-
 from pandana.core.cut import Cut
 
 class Var:
@@ -12,11 +10,16 @@ class Var:
 
     def __init__(self, var):
         self._var = var
+        
+        self._CurrDF = None
+        self._CurrTab = None
 
     # Remember result for each instance of tables
-    @lru_cache(maxsize=1)
     def __call__(self, tables):
-        return self._var(tables)
+        if tables is not self._CurrTab:
+            self._CurrDF = self._var(tables)
+            self._CurrTab = tables
+        return self._CurrDF
 
     def __eq__(self, val):
         return Cut(lambda tables: self(tables) == val)
@@ -47,6 +50,3 @@ class Var:
 
     def __truediv__(self, other):
         return Var(lambda tables: self(tables) / other(tables))
-
-    def __hash__(self):
-        return hash(self._var)

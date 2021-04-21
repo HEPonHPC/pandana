@@ -1,5 +1,3 @@
-from functools import lru_cache
-
 import pandas as pd
 
 class Cut:
@@ -8,10 +6,15 @@ class Cut:
     def __init__(self, cut):
         self._cut = cut
 
+        self._CurrDF = None
+        self._CurrTab = None
+
     # Remember result for each instance of tables
-    @lru_cache(maxsize=1)
     def __call__(self, tables):
-        return self._cut(tables)
+        if tables is not self._CurrTab:
+            self._CurrDF = self._cut(tables)
+            self._CurrTab = tables
+        return self._CurrDF
 
     def __invert__(self):
         return Cut(lambda tables: ~self(tables))

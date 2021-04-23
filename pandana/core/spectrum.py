@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import boost_histogram as bh
+from mpi4py import MPI
 
 class Spectrum:
     """Represents a histogram of some quantity."""
@@ -61,9 +62,13 @@ class Spectrum:
     def entries(self):
         return self._df.shape[0]
 
-    def histogram(self, bins, range=None):
+    def histogram(self, bins, range=None, mpireduce=False, root=0):
         n, bins = bh.numpy.histogram(self._df, bins, range, weights=self._weight,
                                      storage = bh.storage.Double())
+        
+        if mpireduce:
+            n = MPI.COMM_WORLD.reduce(n, MPI.SUM, root=root)
+            
         return n, bins
 
     def integral(self):

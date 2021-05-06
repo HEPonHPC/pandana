@@ -4,7 +4,7 @@ from pandana.core.tables import Tables
 
 class Loader:
     """A class for accessing data in h5py files."""
-    
+
     def __init__(self, files, idcol, main_table_name, indices):
         if type(files) is not list: files = [files]
         self._files = files
@@ -24,18 +24,16 @@ class Loader:
         :return: None
         """
         for f in self._files:
+
             # Open the input file
-            h5file = h5py.File(f, 'r')
+            with h5py.File(f, 'r') as h5file:
 
-            # Construct the tables for this file
-            tables = Tables(h5file, self._idcol, self._main_table_name, indices = self._indices)
+                # Construct the tables for this file
+                tables = Tables(h5file, self._idcol, self._main_table_name, indices = self._indices)
 
-            # FILL ALL SPECTRA for this file
-            for spec in self._specdefs:
-                spec.fill(tables)
-
-            # EXTERMINATE
-            h5file.close()
+                # FILL ALL SPECTRA for this file
+                for spec in self._specdefs:
+                    spec.fill(tables)
 
         self.Finish()
 

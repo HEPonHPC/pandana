@@ -12,16 +12,16 @@ import numpy as np
 from time import time as now
 
 from context import pandana
-from pandana.core import *
-from pandana.core.loader import Loader
-from pandana.core.var import Var
-from nova.cut.analysis_cuts import kNumuCutND
+from pandana import Var
+from Core.NOVALoader import NOVALoader as Loader
+from Core.NOVASpectrum import NOVASpectrum as Spectrum
+from Cuts.NumuCuts import kNumuCutND
 from mpi4py import MPI
 
 
 def main(input_files, idcol):
     logger.info(f'main 0 NA start {now()}')
-    tables = Loader(input_files, idcol, "spill", logger=logger)
+    tables = Loader(input_files)
     logger.info(f'main 0 NA afterLoader {now()}')
     energy = Var(lambda tables: tables["rec.slc"]["calE"])
     logger.info(f'main 0 NA afterVar {now()}')
@@ -29,9 +29,6 @@ def main(input_files, idcol):
     logger.info(f'main 0 NA afterSpectrum {now()}')
     tables.Go()
     logger.info(f'main 0 NA afterGo {now()}')
-
-    # print('my_spectrum internal dataframe: ')
-    # print((my_spectrum.df().head()))
 
     nbins = 50
     logger.info(f'main 0 NA beforehist {now()}')

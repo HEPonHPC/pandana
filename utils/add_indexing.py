@@ -26,9 +26,11 @@ def add_eid_to_group(group):
     if "eid" not in group.keys():
         run = group["run"][:].flatten()
         subrun = group["subrun"][:].flatten()
+        cycle = group["cycle"][:].flatten()
+        batch = group["batch"][:].flatten()
         evt = group["evt"][:].flatten()
         print(f"Processing group {group.name} with column length {run.size}")
-        eid_col = make_eid(run, subrun, evt)
+        eid_col = make_eid(run, subrun, cycle, batch, evt)
         shape = (run.size, 1)
         group.create_dataset(
             "eid",

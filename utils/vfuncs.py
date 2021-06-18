@@ -5,16 +5,18 @@ import numba
 import numpy as np
 
 
-@numba.vectorize(["uint64(uint32,uint32,uint32)"])
-def eid(run, subrun, evt):
+@numba.vectorize(["uint64(uint32,uint32,int64,int64,uint32)"])
+def eid(run, subrun, cycle, batch, evt):
     """Calculate a single-number event id from run/subrun/event.
 
     :param run: numpy array of uint32 run numbers
     :param subrun: numpy array of uint32 subrun numbers
+    :param cycle: numpy array of int32 subrun numbers
+    :param batch: numpy array of int32 subrun numbers
     :param evt: numpy array of uint32 event numbers
     :return: numpy array of uint64 event ids
     """
-    return (run << 30) + (subrun << 20) + evt
+    return (run << 45) + (subrun << 35) + (cycle << 25) + (batch << 20) + (evt)
 
 
 @numba.jit(nopython=True)

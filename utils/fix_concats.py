@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd
 import numba as nb
 
-def readDataset(f, groupname, datasetname):
-    ds = f[groupname][datasetname][:]
+def readDataset(group, datasetname):
+    ds = group[datasetname][:]
 
     if ds.shape[1] == 1:
         ds = ds.flatten()
@@ -15,7 +15,7 @@ def readDataset(f, groupname, datasetname):
 def create_reference(f):
     # Gather all index information
     cols = ['run','subrun','cycle','batch']
-    dic = {col:readDataset(f, 'rec.hdr',col) for col in cols}
+    dic = {col:readDataset(f['rec.hdr'],col) for col in cols}
 
     # Group together to just the index information
     df = pd.DataFrame(dic)
@@ -27,7 +27,7 @@ def create_reference(f):
 @nb.njit
 def get_batch(gruns, gsubs, gcycs, gevts, refruns, refsubs, refcycs, refbats):
     retbats = []
-    
+
     curridx = 0
     lastevt = -1
 
@@ -37,7 +37,7 @@ def get_batch(gruns, gsubs, gcycs, gevts, refruns, refsubs, refcycs, refbats):
     # subsequent indices with the same run/subrun/cycle but different
     # batch numbers.
     for r,s,c,e in zip(gruns, gsubs, gcycs, gevts):
-        # If we come to a new event, 
+        # If we come to a new event,
         # we are guaranteed to be at a new index
         if e < lastevt:
             curridx += 1
@@ -49,13 +49,13 @@ def get_batch(gruns, gsubs, gcycs, gevts, refruns, refsubs, refcycs, refbats):
                 retbats.append(refbats[i])
                 curridx = i
                 break
-                
+
     return np.array(retbats)
 
-def fix_spill(f, RefRun, RefSubrun, RefCycle, RefBatch):
-    if not 'spill/batch' in f:
+def fix_spill(spill, RefRun, RefSubrun, RefCycle, RefBatch):
+    if 'batch' not in spill.keys():
         cols = ['run','subrun','evt']
-        spillrun, spillsubrun, spillevt = [readDataset(f, 'spill', col) for col in cols]
+        spillrun, spillsubrun, spillevt = [readDataset(spill, col) for col in cols]
 
         # Use a placeholder cycle for the function
         spillcycle = np.zeros_like(spillrun)
@@ -82,8 +82,8 @@ def fix_spill(f, RefRun, RefSubrun, RefCycle, RefBatch):
 
         shape = spillrun.shape + (1,)
 
-        f.create_dataset(
-            'spill/cycle',
+        spill.create_dataset(
+            'cycle',
             data=spillcycle,
             shape=shape,
             shuffle=True,
@@ -91,8 +91,8 @@ def fix_spill(f, RefRun, RefSubrun, RefCycle, RefBatch):
             compression_opts=6,
         )
 
-        f.create_dataset(
-            'spill/batch',
+        spill.create_dataset(
+            'batch',
             data=spillbatch,
             shape=shape,
             shuffle=True,
@@ -103,10 +103,9 @@ def fix_spill(f, RefRun, RefSubrun, RefCycle, RefBatch):
         print('batch already exists - skipping')
 
 def fix_group(group, RefRun, RefSubrun, RefCycle, RefBatch):
-    print(f'Processing group {group.name}')
     if 'batch' not in group.keys():
         cols = ['run','subrun','cycle','evt']
-        grun, gsub, gcyc, gevt = [readDataset(f, group.name, col) for col in cols]
+        grun, gsub, gcyc, gevt = [readDataset(group, col) for col in cols]
 
         gbat = get_batch(grun, gsub, gcyc, gevt, \
                          RefRun, RefSubrun, RefCycle, RefBatch)
@@ -137,13 +136,13 @@ if __name__ == '__main__':
         print('Creating reference values')
         RefRun, RefSubrun, RefCycle, RefBatch = create_reference(f)
 
-        print('Fixing spill tree')
-        # The spill group is unique since it is missing both
-        # the cycle and batch numbers
-        fix_spill(f, RefRun, RefSubrun, RefCycle, RefBatch)
-
-        # The other groups are only missing batch
+        # Use the reference to complete the other groups
         print('Fixing groups')
         for group in f:
-            fix_group(f[group], RefRun, RefSubrun, RefCycle, RefBatch)
-
+            print(f'Processing group {group}')
+            # Everything in the spill tree is missing both batch and cycle
+            if group.startswith('spill'):
+                fix_spill(f[group], RefRun, RefSubrun, RefCycle, RefBatch)
+            # Everything else is missing batch
+            else:
+                fix_group(f[group], RefRun, RefSubrun, RefCycle, RefBatch)

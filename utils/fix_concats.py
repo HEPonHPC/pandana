@@ -17,6 +17,8 @@ def create_reference(f):
     cols = ['run','subrun','cycle','batch']
     dic = {col:readDataset(f['rec.hdr'],col) for col in cols}
 
+    assert dic['run'].shape[0]
+
     # Group together to just the index information
     df = pd.DataFrame(dic)
     df = df.groupby(['run','subrun','cycle','batch'], sort=False, as_index=False).first()
@@ -134,11 +136,19 @@ if __name__ == '__main__':
         # The rec.hdr group has all the information we need
         # Use it to create a reference list
         print('Creating reference values')
-        RefRun, RefSubrun, RefCycle, RefBatch = create_reference(f)
+        try:
+            RefRun, RefSubrun, RefCycle, RefBatch = create_reference(f)
+        except AssertionError:
+            print(f'File {sys.argv[1]} has no data in it! Exiting...')
+            sys.exit(1)
 
         # Use the reference to complete the other groups
         print('Fixing groups')
         for group in f:
+            # This is some metadata or similar
+            if not group+'/run' in f:
+                continue
+
             print(f'Processing group {group}')
             # Everything in the spill tree is missing both batch and cycle
             if group.startswith('spill'):

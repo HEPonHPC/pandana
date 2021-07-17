@@ -23,8 +23,9 @@ def create_reference(f):
     df = pd.DataFrame(dic)
     df = df.groupby(['run','subrun','cycle','batch'], sort=False, as_index=False).first()
 
-    return df['run'].to_numpy(), df['subrun'].to_numpy(), \
-           df['cycle'].to_numpy(), df['batch'].to_numpy()
+    # Groupby changes the datatype for some reason
+    # so manually change it back to the original
+    return [df[c].to_numpy().astype(dic[c].dtype) for c in cols]
 
 @nb.njit
 def get_batch(gruns, gsubs, gcycs, gevts, refruns, refsubs, refcycs, refbats):

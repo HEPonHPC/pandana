@@ -1,5 +1,6 @@
 import pandas as pd
 
+
 class DataGroup:
     """Represents a group in an hdf5 file"""
 
@@ -10,9 +11,15 @@ class DataGroup:
         # Primary loop is over the available indices to keep a consistent order
         self._index = [k for k in indices if k in self._group.keys()]
 
-        # Compute the row range for this group
-        event_seq_numbers = self._group[idcol][()].flatten()
-        self._begin_row, self._end_row = event_seq_numbers.searchsorted([begin_evt, end_evt + 1])
+        # the event range is None with only 1 mpi process
+        self._begin_row, self._end_row = begin_evt, end_evt
+
+        # Otherwise compute the row range for this group
+        if begin_evt is not None and end_evt is not None:
+            event_seq_numbers = self._group[idcol][()].flatten()
+            self._begin_row, self._end_row = event_seq_numbers.searchsorted(
+                [begin_evt, end_evt + 1]
+            )
 
         self._df = None
 
@@ -22,7 +29,7 @@ class DataGroup:
         # (not runs, subruns, or subevents, but events) we are to process.
         # dataset is a numpy.array, not a h5py.Dataset.
         ds = self._group.get(datasetname)  # ds is a h5py.Dataset
-        dataset = ds[self._begin_row:self._end_row]
+        dataset = ds[self._begin_row : self._end_row]
 
         if dataset.shape[1] == 1:
             dataset = dataset.flatten()
@@ -46,9 +53,9 @@ class DataGroup:
         # and create the DataFrame
         if self._df is None:
             if isinstance(key, list):
-                values = {k: self.readDatasetFromGroup(k) for k in self._index+key}
+                values = {k: self.readDatasetFromGroup(k) for k in self._index + key}
             else:
-                values = {k: self.readDatasetFromGroup(k) for k in self._index+[key]}
+                values = {k: self.readDatasetFromGroup(k) for k in self._index + [key]}
             self._df = pd.DataFrame(values)
             self._df.set_index(self._index, inplace=True)
         # Otherwise populate each new key

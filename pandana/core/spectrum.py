@@ -3,10 +3,11 @@ import numpy as np
 import boost_histogram as bh
 from mpi4py import MPI
 
+
 class Spectrum:
     """Represents a histogram of some quantity."""
 
-    def __init__(self, loader, cut, var, weight = None):
+    def __init__(self, loader, cut, var, weight=None):
         # Associate this spectrum with the loader
         loader.add_spectrum(self)
 
@@ -27,9 +28,9 @@ class Spectrum:
         if not dfvar.index.equals(dfcut.index):
             # When aligning, the cut and var have to be of the same type
             if isinstance(dfvar, pd.DataFrame):
-                dfvar, dfcut = dfvar.align(dfcut.to_frame(), axis=0, join='inner')
+                dfvar, dfcut = dfvar.align(dfcut.to_frame(), axis=0, join="inner")
             else:
-                dfvar, dfcut = dfvar.align(dfcut, axis=0, join='inner')
+                dfvar, dfcut = dfvar.align(dfcut, axis=0, join="inner")
         dfvar = dfvar.loc[dfcut.to_numpy()]
 
         # Compute weights
@@ -37,15 +38,15 @@ class Spectrum:
             dfwgt = self._wgt(tables)
             # align the weights to the var
             # TODO: Is 0 the right fill?
-            dfwgt, _ = dfwgt.align(dfvar, axis=0, join='right', fill_value=0)
+            dfwgt, _ = dfwgt.align(dfvar, axis=0, join="right", fill_value=0)
         else:
-            dfwgt = pd.Series(1, dfvar.index, name='weight')
+            dfwgt = pd.Series(1, dfvar.index, name="weight")
 
         self._dfvars.append(dfvar)
         self._dfwgts.append(dfwgt)
 
     def finish(self):
-        assert(len(self._dfvars) == len(self._dfwgts))
+        assert len(self._dfvars) == len(self._dfwgts)
         if len(self._dfvars) > 1:
             self._df = pd.concat(self._dfvars, axis=0)
             self._weight = pd.concat(self._dfwgts, axis=0)
@@ -63,12 +64,13 @@ class Spectrum:
         return self._df.shape[0]
 
     def histogram(self, bins, range=None, mpireduce=False, root=0):
-        n, bins = bh.numpy.histogram(self._df, bins, range, weights=self._weight,
-                                     storage = bh.storage.Double())
-        
+        n, bins = bh.numpy.histogram(
+            self._df, bins, range, weights=self._weight, storage=bh.storage.Double()
+        )
+
         if mpireduce:
             n = MPI.COMM_WORLD.reduce(n, MPI.SUM, root=root)
-            
+
         return n, bins
 
     def integral(self):
@@ -82,8 +84,10 @@ class Spectrum:
         wgt = pd.concat([self._weight, other._weight])
         return FilledSpectrum(df, wgt)
 
+
 class FilledSpectrum(Spectrum):
     """Construct a spectrum directly from a Series or DataFrame"""
+
     def __init__(self, df, weight):
         self._df = df
         self._weight = weight
@@ -108,6 +112,7 @@ def save_spectra(filename, spectra, groups):
         store[group + "/weights"] = spectrum.weight()
 
     store.close()
+
 
 def load_spectra(filename, groups):
     """Load a spectrum from a file."""

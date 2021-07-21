@@ -1,4 +1,7 @@
+import pandas as pd
+
 from pandana.core.cut import Cut
+
 
 class Var:
     """Represents a variable.
@@ -10,7 +13,7 @@ class Var:
 
     def __init__(self, var):
         self._var = var
-        
+
         self._CurrDF = None
         self._CurrTab = None
 

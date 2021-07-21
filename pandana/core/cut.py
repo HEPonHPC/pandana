@@ -1,5 +1,6 @@
 import pandas as pd
 
+
 class Cut:
     """Represents a selection criterion to be applied to a dataframe."""
 
@@ -25,11 +26,12 @@ class Cut:
             df2 = other(tables)
 
             if not df1.index.equals(df2.index):
-                df2, df1 = df2.align(df1, axis=0, join='inner')
+                df2, df1 = df2.align(df1, axis=0, join="inner")
             ret = df1.to_numpy() & df2.to_numpy()
             ret = pd.Series(ret, index=df1.index)
 
             return ret
+
         return Cut(AndCut)
 
     def __or__(self, other):
@@ -38,9 +40,10 @@ class Cut:
             df2 = other(tables)
 
             if not df1.index.equals(df2.index):
-                df2, df1 = df2.align(df1, axis=0, join='inner')
+                df2, df1 = df2.align(df1, axis=0, join="inner")
             ret = df1.to_numpy() | df2.to_numpy()
             ret = pd.Series(ret, index=df1.index)
 
             return ret
+
         return Cut(OrCut)

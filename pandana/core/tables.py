@@ -53,3 +53,6 @@ class Tables:
 
     def closeFile(self):
         self._file.close()
+
+    def keys(self):
+        return self._file.keys()

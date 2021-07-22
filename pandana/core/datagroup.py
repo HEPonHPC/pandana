@@ -74,3 +74,6 @@ class DataGroup:
 
     def __str__(self):
         return self._df.__str__()
+
+    def keys(self):
+        return self._group.keys()

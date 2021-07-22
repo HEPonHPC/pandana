@@ -1,5 +1,3 @@
-import h5py
-
 from pandana.core.tables import Tables
 
 
@@ -26,18 +24,16 @@ class Loader:
         :return: None
         """
         for f in self._files:
+            # Construct the tables for this file
+            tables = Tables(
+                f, self._idcol, self._main_table_name, indices=self._indices
+            )
 
-            # Open the input file
-            with h5py.File(f, "r") as h5file:
+            # FILL ALL SPECTRA for this file
+            for spec in self._specdefs:
+                spec.fill(tables)
 
-                # Construct the tables for this file
-                tables = Tables(
-                    h5file, self._idcol, self._main_table_name, indices=self._indices
-                )
-
-                # FILL ALL SPECTRA for this file
-                for spec in self._specdefs:
-                    spec.fill(tables)
+            tables.closeFile()
 
         self.Finish()
 

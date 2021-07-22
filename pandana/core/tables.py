@@ -1,3 +1,4 @@
+import h5py
 from mpi4py import MPI
 
 from pandana import utils
@@ -6,7 +7,7 @@ from pandana.core.datagroup import DataGroup
 
 class Tables:
     def __init__(self, f, idcol, main_table_name, indices):
-        self._file = f
+        self._file = h5py.File(f, "r")
         self._idcol = idcol
         self._main_table_name = main_table_name
         self._indices = indices
@@ -49,3 +50,6 @@ class Tables:
         b, e = span[0], span[-1]
 
         return b, e
+
+    def closeFile(self):
+        self._file.close()

@@ -77,3 +77,6 @@ class DataGroup:
 
     def keys(self):
         return self._group.keys()
+
+    def index(self):
+        return self._index

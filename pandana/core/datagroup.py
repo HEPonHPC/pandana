@@ -57,7 +57,7 @@ class DataGroup:
             else:
                 values = {k: self.readDatasetFromGroup(k) for k in self._index + [key]}
             self._df = pd.DataFrame(values)
-            self._df.set_index(self._index, inplace=True)
+            self._df.set_index(self._index, inplace=True, drop=False)
         # Otherwise populate each new key
         else:
             if isinstance(key, list):

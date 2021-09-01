@@ -5,8 +5,6 @@ class Loader:
     """A class for accessing data in h5py files."""
 
     def __init__(self, files, idcol, main_table_name, indices):
-        if type(files) is not list:
-            files = [files]
         self._files = files
         self._idcol = idcol
         self._main_table_name = main_table_name

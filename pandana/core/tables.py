@@ -7,7 +7,7 @@ from pandana.core.datagroup import DataGroup
 
 class Tables:
     def __init__(self, f, idcol, main_table_name, indices):
-        self._file = h5py.File(f, "r")
+        self._file = h5py.File(f, "r", driver='mpio', comm=MPI.COMM_WORLD)
         self._idcol = idcol
         self._main_table_name = main_table_name
         self._indices = indices

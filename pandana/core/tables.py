@@ -6,8 +6,8 @@ from pandana.core.datagroup import DataGroup
 
 
 class Tables:
-    def __init__(self, f, idcol, main_table_name, indices):
-        self._file = h5py.File(f, "r", driver='mpio', comm=MPI.COMM_WORLD)
+    def __init__(self, f, idcol, main_table_name, indices, nranks_per_file):
+        self._file = h5py.File(f, "r", driver="mpio", comm=MPI.COMM_WORLD)
         self._idcol = idcol
         self._main_table_name = main_table_name
         self._indices = indices
@@ -18,7 +18,7 @@ class Tables:
         comm = MPI.COMM_WORLD
         if comm.size > 1:
             self._begin_evt, self._end_evt = self.calculateEventRange(
-                self._file.get(self._main_table_name), comm.rank, comm.size
+                self._file.get(self._main_table_name), comm.rank, nranks_per_file
             )
 
         self._keys = {}
@@ -41,10 +41,10 @@ class Tables:
             )
         return self._keys[key]
 
-    def calculateEventRange(self, group, rank, nranks):
+    def calculateEventRange(self, group, rank, nranks_per_file):
         assert group is not None
         begin, end = utils.mpiutils.calculate_slice_for_rank(
-            rank, nranks, group[self._idcol].size
+            rank, nranks_per_file, group[self._idcol].size
         )
         span = group[self._idcol][begin:end].flatten()
         b, e = span[0], span[-1]

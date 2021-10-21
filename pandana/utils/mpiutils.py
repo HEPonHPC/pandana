@@ -10,9 +10,9 @@ def calculate_slice_for_rank(myrank, nranks_per_file, arraysz):
     a total nranks. We assure as equitable a distribution of ranks as
     possible.
     """
-
-    local_rank_id = myrank % nranks_per_file
-    if nranks > arraysz:
+    if myrank > nranks_per_file:
+        raise ValueError("myrank must not be larger than ranks assigned to this file")
+    if nranks_per_file > arraysz:
         raise ValueError("nranks must not be larger than array size")
 
     # Each rank will get either minsize or minsize+1 elements to work on.
@@ -20,15 +20,15 @@ def calculate_slice_for_rank(myrank, nranks_per_file, arraysz):
 
     # Ranks [0, leftovers) get minsize+1 elements
     # Ranks [leftovers, nranks) get minsize elements
-    slice_size = minsize + 1 if local_rank_id < leftovers else minsize
+    slice_size = minsize + 1 if myrank < leftovers else minsize
 
     if myrank < leftovers:
-        low = local_rank_id * slice_size
+        low = myrank * slice_size
         high = low + slice_size
     else:
         # The calculation of 'low' is the algebraically simplified version of
         # the more obvious:
         #  low = leftovers*(my_size_size_bytes + 1) + (myrank - leftovers)*my_size_size_bytes
-        low = leftovers + local_rank_id * slice_size
+        low = leftovers + myrank * slice_size
         high = low + slice_size
     return low, high

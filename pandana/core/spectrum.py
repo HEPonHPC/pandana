@@ -21,17 +21,18 @@ class Spectrum:
     def fill(self, tables):
         # Compute the var and complete cut
         dfvar = self._var(tables)
-        dfcut = self._cut(tables)
+        if self._cut is not None:
+            dfcut = self._cut(tables)
 
-        # We allow the cut to have any subset of the indices used in the var
-        # The two dataframes need to be aligned in this case
-        if not dfvar.index.equals(dfcut.index):
-            # When aligning, the cut and var have to be of the same type
-            if isinstance(dfvar, pd.DataFrame):
-                dfvar, dfcut = dfvar.align(dfcut.to_frame(), axis=0, join="inner")
-            else:
-                dfvar, dfcut = dfvar.align(dfcut, axis=0, join="inner")
-        dfvar = dfvar.loc[dfcut.to_numpy()]
+            # We allow the cut to have any subset of the indices used in the var
+            # The two dataframes need to be aligned in this case
+            if not dfvar.index.equals(dfcut.index):
+                # When aligning, the cut and var have to be of the same type
+                if isinstance(dfvar, pd.DataFrame):
+                    dfvar, dfcut = dfvar.align(dfcut.to_frame(), axis=0, join="inner")
+                else:
+                    dfvar, dfcut = dfvar.align(dfcut, axis=0, join="inner")
+            dfvar = dfvar.loc[dfcut.to_numpy()]
 
         # Compute weights
         if self._wgt is not None:

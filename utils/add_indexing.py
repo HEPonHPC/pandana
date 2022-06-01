@@ -3,8 +3,82 @@
 The eid is calculated from the run/subrun/evt numbers in the group.
 """
 import h5py as h5
-from vfuncs import eid as make_eid, make_evtseq_map, apply_evtseq_map
+from vfuncs import (
+    eid as make_eid,
+    make_evtseq_map,
+    apply_evtseq_map,
+    make_vector_index,
+    ffill_vector_index,
+)
+import numpy as np
+import pandas as pd
 
+def find_level(dset_name):
+    level_has_idx = np.array([level.endswith('_idx') for level in str(dset_name).split('.')], dtype=int)
+    if level_has_idx.any():
+        return np.nonzero(level_has_idx)[0][0]
+    else:
+        return np.inf
+def find_lowest_level_with_idx(group):
+    dset_names = list(group.keys())
+    idx_level = [find_level(dset_name) for dset_name in dset_names]
+    return dset_names[np.argmin(idx_level)]
+
+def add_neutrino_vector_index(file):
+    """Add neutrino_idx Dataset to {group_name} if 
+    group_name starts with neutrino, ie a nuTree branch
+    """
+    event_index_levels = ['run', 'subrun', 'cycle', 'batch', 'evt']
+    neutrino_groups = [name for name in file if name.startswith("neutrino")]
+    # groups representing vectors or branching off from vectors
+    # have an additional _idx dataset 
+    # and potentially many rows for each neutrino_idx
+    # so we have to calculate the new dataset differently
+    vector_groups = [
+        np.array([
+            dset.endswith('_idx')
+            for dset in list(file[g].keys())
+            if dset != 'neutrino_idx'
+        ]).any() 
+        for g in neutrino_groups
+    ]
+    for neutrino_group, isvector in zip(neutrino_groups, vector_groups):
+        if not isvector:
+            if 'neutrino_idx' not in file[neutrino_group].keys():
+                index_data = np.array([file[neutrino_group][idx_name][:].flatten() for idx_name in event_index_levels])
+                index = pd.MultiIndex.from_arrays(index_data)
+                neutrino_vector_index = make_vector_index(index.duplicated().astype(int))
+                shape = (index.shape[0],1)
+                file[neutrino_group].create_dataset(
+                    "neutrino_idx",
+                    data=neutrino_vector_index,
+                    shape=shape,
+                    shuffle=True,
+                    compression="gzip",
+                    compression_opts=6,
+                )
+            else:
+                print(f'Skipping {neutrino_group}')
+        else:
+            if 'neutrino_idx' not in file[neutrino_group].keys():
+                index_data = np.array([file[neutrino_group][idx_name][:].flatten() for idx_name in event_index_levels])
+                index = pd.MultiIndex.from_arrays(index_data)
+                vector_index = file[neutrino_group][find_lowest_level_with_idx(file[neutrino_group])][:].flatten()
+                reference = file['neutrino']['neutrino_idx'][:].flatten()
+                neutrino_vector_index = ffill_vector_index(reference.astype(int),
+                                                           vector_index.astype(int))
+                shape = (index.shape[0],1)
+                file[neutrino_group].create_dataset(
+                    "neutrino_idx",
+                    data=neutrino_vector_index,
+                    shape=shape,
+                    shuffle=True,
+                    compression="gzip",
+                    compression_opts=6,
+                )
+            else:
+                print(f'Skipping {neutrino_group}')
+            
 
 def add_eid(file):
     """
@@ -80,3 +154,6 @@ if __name__ == "__main__":
         add_eid(file_to_mutate)
         print("Starting to add evtseq columns")
         add_evtseq(file_to_mutate)
+        print("Starting to add neutrino vector index")
+        add_neutrino_vector_index(file_to_mutate)
+        

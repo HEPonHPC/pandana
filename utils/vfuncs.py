@@ -5,7 +5,50 @@ import numba
 import numpy as np
 
 
-@numba.vectorize(["uint64(uint32,uint32,int64,int64,uint32)"])
+@numba.jit(nopython=True)
+def ffill_vector_index(reference, vector_index):
+    """Forward-fill according to a reference array of values
+    traversed at a pace set by a vector-like index
+    array where the reference and vector index arrays are different shapes
+
+    Eg. Calculates the neutrino index vector for the neutrino primaries
+    group given the neutrino vector index from the neutrinos group (left)
+    and neutrino primaries (right)
+
+    :param left_index: numpy array of the reference vector
+    :param right_index: numpy array of the vector index
+    :return: numpy array of the ffilled vector
+    """
+    trigger = np.ones_like(vector_index)
+    trigger[1:] = ~(np.diff(vector_index) > 0)
+    ffill = np.zeros_like(trigger)
+
+    iref = -1
+    for i in range(len(ffill)):
+        iref = iref + trigger[i]
+        ffill[i] = reference[iref]
+    return ffill
+
+
+@numba.jit(nopython=True)
+def make_vector_index(indices_duplicated):
+    """Return an array of values meant to index
+    a vector nested within a non-unique set of event indices
+
+    :param indices_duplicated: numpy array of boolean values
+    indicating whether an index has been repeated.
+    Eg, result of df.index.duplicated()
+    :return: numpy array of uint64 nested vector indices
+    """
+    vidx = np.zeros_like(indices_duplicated)
+    for i in range(1, len(indices_duplicated)):
+        vidx[i] = (vidx[i - 1] + 1) * indices_duplicated[i]
+    return vidx
+
+
+@numba.vectorize(
+    ["uint64(uint32,uint32,int64,int64,uint32)"],
+)
 def eid(run, subrun, cycle, batch, evt):
     """Calculate a single-number event id from run/subrun/event.
 

@@ -1,5 +1,36 @@
 import pandas as pd
+from mpi4py import MPI
 
+class EvtSeqQuery:
+    def __init__(self, group, idcol, root=0):
+        self._group = group
+        self._idcol = idcol
+        self._myrank = MPI.COMM_WORLD.Get_rank()
+        self._world_size = MPI.COMM_WORLD.Get_size()
+        self._root = root
+        
+        if self._myrank == self._root:
+            self._event_seq_numbers = self._group[self._idcol][()].flatten()
+        else:
+            self._event_seq_numbers = None
+    
+    def searchsorted(self, begin_evt, end_evt):
+        return self._event_seq_numbers.searchsorted(
+            [begin_evt, end_evt + 1]
+        )
+
+    def getRowRange(self, begin_evt, end_evt):
+        comm = MPI.COMM_WORLD
+        all_evt = comm.gather((begin_evt, end_evt), root=self._root)
+
+        if self._myrank == self._root:
+            all_row = [self.searchsorted(b,e) for b,e in all_evt]
+        else:
+            all_row = None
+
+        begin_row, end_row = comm.scatter(all_row, root=self._root)
+        
+        return begin_row, end_row
 
 class DataGroup:
     """Represents a group in an hdf5 file"""
@@ -10,18 +41,30 @@ class DataGroup:
         # The dataframe indices are a subet of all available indices
         # Primary loop is over the available indices to keep a consistent order
         self._index = [k for k in indices if k in self._group.keys()]
+        
+        if begin_evt is None and end_evt is None:
+            # the event range is None with only 1 mpi process
+            self._begin_row, self._end_row = begin_evt, end_evt
+        else:
+            # Otherwise compute the row range for this group
+            query = EvtSeqQuery(self._group, idcol)
+            self._begin_row, self._end_row = query.getRowRange(begin_evt, end_evt)
+            
+        self._df = None
 
-        # the event range is None with only 1 mpi process
-        self._begin_row, self._end_row = begin_evt, end_evt
+    def getRowRange(self, begin_evt, end_evt):
+        comm = MPI.COMM_WORLD
 
-        # Otherwise compute the row range for this group
-        if begin_evt is not None and end_evt is not None:
+        if comm.Get_rank() == 0:
+            # rank zero reads the event_seq group
             event_seq_numbers = self._group[idcol][()].flatten()
-            self._begin_row, self._end_row = event_seq_numbers.searchsorted(
+            begin_row, end_row = event_seq_numbers.searchsorted(
                 [begin_evt, end_evt + 1]
             )
-
-        self._df = None
+            pass
+        else:
+            # other ranks ask rank zero for their row range
+            pass
 
     def readDatasetFromGroup(self, datasetname):
         # Determine range to be read here.
